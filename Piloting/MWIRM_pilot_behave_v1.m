@@ -7,7 +7,7 @@ addpath(genpath(lscpTools_path))
 
 % look for behav files
 data_path=[root_path filesep 'Pilot/'];
-files=dir([data_path filesep 'wanderIM_behavres_s1*.mat']);
+files=dir([data_path filesep 'wanderIM_behavres_sP*.mat']);
 
 %%
 all_probe_res=[];
@@ -91,7 +91,7 @@ probe_table.Task(probe_table.Task=='3')='Gender';
 
 %% Plots
 TaskType={'Digit','Emotion','Gender'};
-figure;
+figure; set(gcf,'position',[1     1   550   800]);
 for nplot=1:6
     subplot(3,2,nplot); hold on;
     switch nplot
@@ -116,7 +116,8 @@ for nplot=1:6
     end
     temp2=[];
     for ntask=1:3
-        scatter(ntask,temp(test_table.Task==TaskType{ntask}),'Marker','o','MarkerEdgeColor','k','MarkerFaceColor','k','SizeData',144)
+        errorbar(ntask,mean(temp(test_table.Task==TaskType{ntask})),std(temp(test_table.Task==TaskType{ntask})),'LineWidth',3,'Color','k');
+        scatter(ntask,mean(temp(test_table.Task==TaskType{ntask})),'Marker','o','MarkerEdgeColor','k','MarkerFaceColor','k','SizeData',144)
         temp2(ntask)=mean(temp(test_table.Task==TaskType{ntask}));
     end
     plot(1:3,temp2,'LineWidth',3,'Color','k');
@@ -124,8 +125,9 @@ for nplot=1:6
 end
 
 figure;
+figure; set(gcf,'position',[551     1   550   800]);
 for nplot=1:2
-    subplot(1,2,nplot); hold on;
+    subplot(2,1,nplot); hold on;
     switch nplot
         case 1
             startidx=2;
@@ -139,7 +141,8 @@ for nplot=1:2
         temp=table2array(probe_table(:,startidx+nstate));
         temp2=[];
         for ntask=1:3
-            scatter(ntask,temp(probe_table.Task==TaskType{ntask}),'Marker','o','MarkerEdgeColor',Colors(nstate,:),'MarkerFaceColor',Colors(nstate,:),'SizeData',144)
+             errorbar(ntask,mean(temp(probe_table.Task==TaskType{ntask})),std(temp(probe_table.Task==TaskType{ntask})),'LineWidth',3,'Color',Colors(nstate,:));  
+            scatter(ntask,mean(temp(probe_table.Task==TaskType{ntask})),'Marker','o','MarkerEdgeColor',Colors(nstate,:),'MarkerFaceColor',Colors(nstate,:),'SizeData',144)
             temp2(ntask)=mean(temp(probe_table.Task==TaskType{ntask}));
         end
         hp(nstate)=plot(1:3,temp2,'LineWidth',3,'Color',Colors(nstate,:));
