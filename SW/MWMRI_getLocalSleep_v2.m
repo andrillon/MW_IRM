@@ -49,7 +49,7 @@ for nF=1:length(files)
         end
     end
     
-    probe_EEG=probe_EEG-repmat(mean(probe_EEG(:,match_str(ChanLabels,{'TP7','TP8'}),:),2),[1,size(probe_EEG,2),1]);
+    probe_EEG=probe_EEG-repmat(mean(probe_EEG(:,match_str(ChanLabels,{'TP9','TP10'}),:),2),[1,size(probe_EEG,2),1]);
     probe_EEG=probe_EEG-repmat(mean(probe_EEG,3),[1,1,size(probe_EEG,3)]);
     
     all_Waves=[];

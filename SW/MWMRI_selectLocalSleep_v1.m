@@ -38,6 +38,23 @@ for nF=1:length(files)
     behav_files=dir([root_path filesep 'Behav' filesep 'wanderIM_behavres_s' SubID(end-2:end) '*.mat']);
     load([behav_files(end).folder filesep behav_files(end).name])
 
+    %%% epoch probe
+    temp_data=EEG.data;
+    temp_data(match_str({EEG.chanlocs.labels},{'ECG'}),:)=[];
+    ChanLabels={EEG.chanlocs.labels};
+    ChanLabels(match_str({EEG.chanlocs.labels},{'ECG'}))=[];
+     event_type={EEG.event.type};
+    event_time=[EEG.event.latency];
+    findProbe_idx=match_str({EEG.event.type},'P  1');
+    findProbe_times=event_time(findProbe_idx);
+    probe_EEG=[];
+    nPc=0;
+    for nP=1:length(findProbe_times)
+        if min((-30*EEG.srate:5*EEG.srate)+round(findProbe_times(nP)))>1
+            nPc=nPc+1;
+        probe_EEG(nPc,:,:)=temp_data(:,(-30*EEG.srate:5*EEG.srate)+round(findProbe_times(nP)));
+        end
+    end
     
     %%% clean detection
     paramSW.prticle_Thr=90; % 80 or 90 or 95
@@ -85,15 +102,18 @@ for nF=1:length(files)
         temp_PosSl(nF,nE)=nanmean(slow_Waves(slow_Waves(:,3)==nE,13));
         
         temp_SW=slow_Waves(slow_Waves(:,3)==nE,5);
+        temp_SW_nProbe=slow_Waves(slow_Waves(:,3)==nE,2);
         time_SW=(temp_SW/EEG.srate)/60;
         
         if ismember(labels(nE),myERP_Elec)
             % get ERP for slow waves
             for m=1:length(temp_SW)
-                if temp_SW(m)-0.5*EEG.srate>0 && temp_SW(m)+1*EEG.srate<size(EEG.data,2)
-                    vec=EEG.data(nE,(temp_SW(m)-0.5*EEG.srate):(temp_SW(m)+1*EEG.srate));
+                if temp_SW(m)-0.5*EEG.srate>0 && temp_SW(m)+1*EEG.srate<30*EEG.srate
+                    vec=probe_EEG(temp_SW_nProbe(m),nE,(temp_SW(m)-0.5*EEG.srate):(temp_SW(m)+1*EEG.srate));
                     vec=vec-mean(vec(1:0.5*EEG.srate));
+                    if max(abs(vec))<150
                     temp_ERP{find(ismember(myERP_Elec,labels(nE)))}=[temp_ERP{find(ismember(myERP_Elec,labels(nE)))} ; vec];
+                    end
                 end
             end
         end
@@ -107,5 +127,5 @@ end
 
 %%
 figure;
-plot(-0.5:1/EEG.srate:1,squeeze((mean_SW_ERP_byElec(2,:,:))));
+plot(-0.5:1/EEG.srate:1,squeeze((mean_SW_ERP_byElec))');
 
