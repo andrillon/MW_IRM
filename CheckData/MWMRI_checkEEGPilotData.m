@@ -3,8 +3,8 @@ close all
 clear all
 
 %% Paths
-path_fieldtrip='/Users/tand0009/Work/local/fieldtrip/';
-path_data='/Volumes/GoogleDrive/Shared drives/MW_fMRI_EEG/Data/';
+path_fieldtrip='/Users/thandrillon/Work/local/fieldtrip/';
+path_data='/Users/thandrillon/Data/MW_IRM/';
 
 addpath(path_fieldtrip);
 ft_defaults;
@@ -13,8 +13,8 @@ ft_defaults;
 name_file='MWMRI202';
 sub_ID='202';
 
-hdr=ft_read_header([path_data filesep 'EEG' filesep name_file '.eeg']);
-evt=ft_read_event([path_data filesep 'EEG' filesep name_file '.eeg']);
+hdr=ft_read_header([path_data filesep 'EEG' filesep 'Preprocessed' filesep name_file '.eeg']);
+evt=ft_read_event([path_data filesep 'EEG' filesep 'Preprocessed' filesep name_file '.eeg']);
 
 behav_files=dir([path_data filesep 'Behav' filesep 'wanderIM_behavres_s' sub_ID '*.mat']);
 load([behav_files.folder filesep behav_files.name])
