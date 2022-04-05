@@ -5,37 +5,46 @@
 clear all;
 close all;
 
-run ../localdef.m
+run localdef.m
 
 % adding relevant toolboxes to the path
 addpath(genpath(lscpTools_path))
 addpath(path_eeglab)
 
 % select relevant files, here baseline blocks
-files=dir([data_path filesep 'MWMRI*clean_a.set']);
+files=dir([data_path filesep 'MWMRI*clean.set']);
+files = files([1:7,9,11,13],:);
+filesx=dir([data_path filesep 'MWMRI*clean_a.set']);
+files = [files; filesx];
 
-myERP_Elec={'Fz','Cz','Pz','Oz'};
+
+myERP_Elec={'Fz'};
 
 %% loop across trials for baseline blocks
 redo=1;
 mean_SW_ERP_byElec=[];
-for nF=1:length(files)
+for nF= 1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
     
     SubID=files(nF).name;
     sep=findstr(SubID,'_');
     SubID=SubID(1:sep(1)-1);
-    if redo==0 && exist([save_path filesep 'SW_' SubID '.mat'])~=0
+    if redo==0 && exist([save_path filesep 'SW_' SubID '_.mat'])~=0
         continue;
     end
     
     EEG = pop_loadset('filename',files(nF).name,'filepath',files(nF).folder);
     fprintf('... ... duration according to EEG data %g minutes\n',size(EEG.data,2)/EEG.srate/60)
-    load([save_path filesep 'allSW_' SubID])
+    
+    if exist([save_path filesep 'SW_' SubID '_.mat'])==0
+        load([save_path filesep 'allSW_' SubID])
+    else
+        load([save_path filesep 'allSW_' SubID '_'])
+    end
     
     %%% load behavioural results and keep only waves 20s before probes
-    behav_files=dir([root_path filesep 'Behav' filesep 'wanderIM_behavres_s' SubID(end-2:end) '*.mat']);
+    behav_files=dir([root_path filesep 'EEGFMRI_BehavData' filesep 'wanderIM_behavres_s' SubID(end-2:end) '*.mat']);
     load([behav_files(end).folder filesep behav_files(end).name])
 
     %%% epoch probe
@@ -127,5 +136,47 @@ end
 
 %%
 figure;
-plot(-0.5:1/EEG.srate:1,squeeze((mean_SW_ERP_byElec))');
+%p = plot(-0.5:1/EEG.srate:1,squeeze((mean_SW_ERP_byElec))');
+p = plot(-0.5:1/EEG.srate:1,squeeze((avr_mean_SW_ERP_byElec))');
+
+
+format_fig;
+ylim([-15 10]);
+set(p,'LineWidth',1.5)
+title('Average Slow Wave at Fz (n=10)');       
+xlabel('Time (sec)');         
+ylabel('Voltage (µV)');
+
+%% Density
+
+Location = EEG.chanlocs;
+Location(match_str({Location.labels},{'ECG'}))=[];
+Location(match_str({Location.labels},{'ECG2'}))=[];
+
+
+figure;
+temp_topo = avrSW_dens;
+topoplot(temp_topo, Location,'electrodes','on');
+caxis([3 8])
+title('Density of Slow waves (wave/min)')
+format_fig;
+
+%%
+NumSW_OT = [];
+NumSW_MW = [];
+NumSW_MB = [];
+
+
+% for each specific triggers
+for j = 1:length(probe_res)
+    if probe_res(j,17)==1
+        NumSW_OT = [NumSW_OT, sum(temp_SW_nProbe(:,1)==j)];
+    elseif probe_res(j,17)==2
+        NumSW_MW = [NumSW_MW, sum(temp_SW_nProbe(:,1)==j)];
+    elseif probe_res(j,17)==3
+        NumSW_MB = [NumSW_MB, sum(temp_SW_nProbe(:,1)==j)];
+    end 
+end
+
+%%
 

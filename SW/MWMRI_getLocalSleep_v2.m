@@ -5,14 +5,14 @@
 clear all;
 close all;
 
-run ../localdef.m
+run localdef.m
 
 % adding relevant toolboxes to the path
 addpath(genpath(lscpTools_path))
 addpath(genpath(path_eeglab))
 
 % select relevant files, here baseline blocks
-files=dir([data_path filesep 'MWMRI*clean_a.set']);
+files=dir([data_path filesep 'MWMRI*clean.set']);
 
 %% loop across trials for baseline blocks
 redo=1;
@@ -104,7 +104,7 @@ for nF=1:length(files)
         end
         slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
     end
-%     save([save_path filesep 'SW_' SubID],'slow_Waves','paramSW','ChanLabels')
+    save([save_path filesep 'SW_' SubID],'slow_Waves','paramSW','ChanLabels')
     
 end
 
