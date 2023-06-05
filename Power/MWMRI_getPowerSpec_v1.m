@@ -1,0 +1,123 @@
+%%%%% Preprocessing check
+%%%%% Basic analyses on the preprocessed, filtered and epoch EEG data
+
+%% Init
+clear all;
+close all;
+
+run ../localdef.m
+
+% adding relevant toolboxes to the path
+addpath(genpath(lscpTools_path))
+addpath(genpath(path_eeglab))
+addpath((path_fieldtrip))
+ft_defaults;
+% select relevant files, here baseline blocks
+files=dir([data_path filesep filesep 'MWMRI*clean.set']);
+
+myERP_Elec={'Fz','Cz','Pz','Oz'};
+
+%% loop across trials for baseline blocks
+redo=1;
+mean_SW_ERP_byElec=[];
+nFc=0;
+for nF=1:length(files)
+    % load file with EEGlab
+    fprintf('... file: %s\n',files(nF).name)
+    
+    SubID=files(nF).name;
+    sep=findstr(SubID,'clean.set');
+    if ismember(SubID,{'MWMRI223','MWMRI243'})
+        continue;
+    end
+    if isempty(sep)
+        SubID=SubID(1:end-9);
+    else
+        SubID=SubID(1:sep(1)-1);
+    end
+    
+    nFc=nFc+1;
+    EEG = pop_loadset('filename',files(nF).name,'filepath',files(nF).folder);
+    fprintf('... ... dimension of EEG data %g - %g - %g\n',size(EEG.data,1),size(EEG.data,2),size(EEG.data,3))
+    fprintf('... ... duration according to EEG data %g minutes\n',size(EEG.data,2)/EEG.srate/60)
+    data = eeglab2fieldtrip(EEG,'preprocessing','none');
+    
+    %     % epoch alongs probes
+    %     cfg=[];
+    %     cfg.trl=[];
+    %     evt=EEG.event;
+    %     event_type={evt.type};
+    %     event_time=[evt.latency];
+    %     findProbe_idx=match_str({evt.type},'P  1');
+    %     findProbe_times=event_time(findProbe_idx);
+    %     for nP=1:length(findProbe_idx)
+    %         if min((-20*EEG.srate:0*EEG.srate)+round(findProbe_times(nP)))>1
+    %             cfg.trl=[cfg.trl ; [-20*EEG.srate+findProbe_times(nP) findProbe_times(nP) -20*EEG.srate]];
+    %         end
+    %     end
+    
+    ChanLabels={EEG.chanlocs.labels};
+    cfg=[]; % currently ref to 32 (F1???)
+    cfg.reref         = 'yes';
+    cfg.refchannel ='all';
+    cfg.channel =ChanLabels(~ismember(ChanLabels,{'ECG','ECG2'}));
+    data=ft_preprocessing(cfg,data);
+    maxAbs=[];
+    for nTr=1:length(data.trial)
+        maxAbs(nTr,:)=max(abs(data.trial{nTr}),[],2);
+    end
+    
+    
+    % compute the fractal and original spectra
+    cfg               = [];
+    cfg.foilim        = [2 60];
+    cfg.pad           = 'nextpow2';
+    cfg.tapsmofrq     = 0.1;
+    cfg.method        = 'mtmfft';
+%     cfg.trials        = find(max(maxAbs')<250);
+    %     cfg.output        = 'fooof_aperiodic';
+    %     cfg.fooof.max_peaks = 4;
+    %     cfg.fooof.proximity_threshold = 1;
+    %     fractal = ft_freqanalysis(cfg, data);
+    cfg.output        = 'pow';
+    cfg.keeptrials='yes';
+    pow = ft_freqanalysis(cfg, data);
+    %     cfg.output        = 'fooof_peaks';
+    %     pow_peaks = ft_freqanalysis(cfg, data);
+    for nE=1:size(pow.powspctrm,2)
+        temp_pow=squeeze(pow.powspctrm(:,nE,:));
+        temp_abs=maxAbs(:,nE);
+        if mean(temp_abs<250)>0.8
+            all_pow(nFc,nE,:)=mean(10*log10(temp_pow(temp_abs<250,:)),1);
+        else
+            all_pow(nFc,nE,:)=nan(1,1901);
+        end
+        all_absThrProp(nFc,nE)=mean(temp_abs<250);
+    end
+    freqs=pow.freq;
+    labels=pow.label;
+    figure;
+    plot(freqs,squeeze(all_pow(nFc,:,:))')
+    format_fig;
+    title(SubID)
+%     pause;
+end
+
+%%
+all_tr=[];
+for nT=1:40
+    all_tr=[all_tr ;data.trial{nT}(3,:)];
+end
+
+%%
+myLabels={'Fz','Cz','Pz','Oz'};
+figure;
+for nCh=1:length(myLabels)
+    hold on;
+    plot(freqs,fastsmooth(squeeze(nanmean(all_pow(:,match_str(labels,myLabels{nCh}),:),1)),15,3,1));
+end
+legend(myLabels);
+format_fig;
+xlabel('Freq (Hz)')
+ylabel('Power (log)')
+xlim([2 30])

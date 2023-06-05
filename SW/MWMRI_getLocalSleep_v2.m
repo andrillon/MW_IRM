@@ -12,51 +12,48 @@ addpath(genpath(lscpTools_path))
 addpath(genpath(path_eeglab))
 
 % select relevant files, here baseline blocks
-files=dir([data_path filesep 'MWMRI*clean_a.set']);
+files=dir([data_path filesep filesep 'MWMRI*_clean.set']);
 
 %% loop across trials for baseline blocks
 redo=1;
-for nF=1:length(files)
+for nF=2:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
     
     SubID=files(nF).name;
-    SubID=SubID(1:findstr(SubID,'clean')-1);
-    if redo==0 && exist([save_path filesep 'SW_' SubID '.mat'])~=0
+    SubID=SubID(1:findstr(SubID,'_')-1);
+    if redo==0 && exist([save_path filesep 'allSW_' SubID '.mat'])~=0
         continue;
     end
    
-    EEG = pop_loadset('filename',files(nF).name,'filepath',files(nF).folder);
-    fprintf('... ... duration according to EEG data %g minutes\n',size(EEG.data,2)/EEG.srate/60)
+    load([files(nF).folder filesep files(nF).name]);
+%     evt = ft_read_event([files(nF).folder filesep files(nF).name]);
+%     data = ft_read_data([files(nF).folder filesep files(nF).name]);
+    fprintf('... ... duration according to EEG data %g minutes\n',size(data,2)/hdr.Fs/60)
     
     %%% Epoch by probe
-    temp_data=EEG.data;
-    temp_data(match_str({EEG.chanlocs.labels},{'ECG'}),:)=[];
-    ChanLabels={EEG.chanlocs.labels};
-    ChanLabels(match_str({EEG.chanlocs.labels},{'ECG'}))=[];
-    
-    event_type={EEG.event.type};
-    event_time=[EEG.event.latency];
-    findProbe_idx=match_str({EEG.event.type},'P  1');
+    event_type={evt.type};
+    event_time=[evt.sample];
+    findProbe_idx=match_str({evt.type},'P');
     findProbe_times=event_time(findProbe_idx);
     
     probe_EEG=[];
     nPc=0;
     for nP=1:length(findProbe_times)
-        if min((-30*EEG.srate:5*EEG.srate)+round(findProbe_times(nP)))>1
+        if min((-30*hdr.Fs:5*hdr.Fs)+round(findProbe_times(nP)))>1
             nPc=nPc+1;
-        probe_EEG(nPc,:,:)=temp_data(:,(-30*EEG.srate:5*EEG.srate)+round(findProbe_times(nP)));
+        probe_EEG(nPc,:,:)=data(:,(-30*hdr.Fs:5*hdr.Fs)+round(findProbe_times(nP)));
         end
     end
     
-    probe_EEG=probe_EEG-repmat(mean(probe_EEG(:,match_str(ChanLabels,{'TP9','TP10'}),:),2),[1,size(probe_EEG,2),1]);
+    probe_EEG=probe_EEG-repmat(mean(probe_EEG(:,[29 30],:),2),[1,size(probe_EEG,2),1]);
     probe_EEG=probe_EEG-repmat(mean(probe_EEG,3),[1,1,size(probe_EEG,3)]);
     
     all_Waves=[];
     for nP=1:size(probe_EEG,1)
         fprintf('probe %2.0f/%2.0f\n',nP,size(probe_EEG,1))
-        [twa_results]=twalldetectnew_TA_v2(squeeze(probe_EEG(nP,:,:)),EEG.srate,0);
-        for nE=1:length(ChanLabels)
+        [twa_results]=twalldetectnew_TA_v2(squeeze(probe_EEG(nP,:,:)),hdr.Fs,0);
+        for nE=1:size(data,1)
             all_Waves=[all_Waves ; [repmat([1 nP nE],length(abs(cell2mat(twa_results.channels(nE).maxnegpkamp))),1) abs(cell2mat(twa_results.channels(nE).maxnegpkamp))'+abs(cell2mat(twa_results.channels(nE).maxpospkamp))' ...
                 cell2mat(twa_results.channels(nE).negzx)' ...
                 cell2mat(twa_results.channels(nE).poszx)' ...
@@ -73,6 +70,7 @@ for nF=1:length(files)
         end
     end
     fprintf('\n')
+    ChanLabels=hdr.label;
     save([save_path filesep 'allSW_' SubID],'all_Waves','ChanLabels')
     
 %     %%% clean detection
@@ -85,7 +83,7 @@ for nF=1:length(files)
     paramSW.max_Freq=7;
     
     all_Waves=double(all_Waves);
-    all_freq=1./(abs((all_Waves(:,5)-all_Waves(:,7)))./EEG.srate);
+    all_freq=1./(abs((all_Waves(:,5)-all_Waves(:,7)))./hdr.Fs);
     fprintf('... ... %g %% waves discarded because of frequency\n',mean(all_freq>paramSW.max_Freq)*100)
     fprintf('... ... %g %% waves discarded because of max P2P ampl\n',mean(all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl)*100)
     fprintf('... ... %g %% waves discarded because of max pos ampl\n',mean(all_Waves(:,11)>paramSW.max_posampl | all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl)*100)
