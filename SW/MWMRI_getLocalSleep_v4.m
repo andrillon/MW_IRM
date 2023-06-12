@@ -16,7 +16,7 @@ files=dir([data_path filesep filesep 'MWMRI*clean.set']);
 
 %% loop across trials for baseline blocks
 redo=1;
-for nF=11:length(files)
+for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
     
