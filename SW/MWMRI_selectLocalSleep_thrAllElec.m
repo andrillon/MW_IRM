@@ -5,14 +5,14 @@
 clear all;
 close all;
 
-run ../localdef.m
+run /Users/kuszti/Documents/Git/MW_IRM/SW/localdef.m
 
 % adding relevant toolboxes to the path
 addpath(genpath(lscpTools_path))
 addpath(genpath(exgauss_path))
 addpath(genpath(FMINSEARCHBND_path))
 % select relevant files, here baseline blocks
-files=dir([data_path filesep filesep 'MWMRI*clean.set']);
+files=dir([data_path filesep filesep 'MWMRI*clean2.set']);
 
 myERP_Elec={'Fz','Cz','Pz','Oz'};
 
