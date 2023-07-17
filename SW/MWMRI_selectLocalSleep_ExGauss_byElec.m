@@ -3,7 +3,7 @@
 
 %% Init
 clear all;
-close all;
+% close all;
 
 run ../localdef.m
 
@@ -12,10 +12,10 @@ addpath(genpath(lscpTools_path))
 addpath(genpath(exgauss_path))
 addpath(genpath(FMINSEARCHBND_path))
 % select relevant files, here baseline blocks
-files=dir([data_path filesep filesep 'MWMRI*clean.set']);
+files=dir([data_path filesep filesep 'MWMRI244*clean3.set']);
 
-myERP_Elec={'Fz','Cz','Pz','Oz'};
-myERP_Elec2={{'T7','F3'},{'T8','F4'}};
+myERP_Elec={'Fz','Cz','Pz','Oz','PO7','PO8'};
+myERP_Elec2={{'PO7','F3'},{'PO8','F4'}};
 
 %% loop across trials for baseline blocks
 mean_SW_ERP_byElec=[];
@@ -27,7 +27,7 @@ for nF=1:length(files)
     fprintf('... file: %s\n',files(nF).name)
     
     SubID=files(nF).name;
-    sep=findstr(SubID,'clean.set');
+    sep=findstr(SubID,'clean3.set');
     if ismember(SubID,{'MWMRI223','MWMRI243'})
         continue;
     end
@@ -36,7 +36,7 @@ for nF=1:length(files)
     else
         SubID=SubID(1:sep(1)-1);
     end
-    if exist([save_path filesep 'newallSW_' SubID '.mat'])==0
+    if exist([save_path filesep 'new3allSW_' SubID '.mat'])==0
         continue;
     end
     
@@ -50,12 +50,12 @@ for nF=1:length(files)
     
     % load EEG
     addpath(genpath(path_eeglab));
-EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
-rmpath(genpath(path_eeglab));
-
-    if size(EEG.data,1)<64
-        continue;
-    end
+    EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
+    rmpath(genpath(path_eeglab));
+    
+%     if size(EEG.data,1)<64
+%         continue;
+%     end
     ChanLabels={EEG.chanlocs.labels};
     EEG.data=EEG.data(~ismember(ChanLabels,{'ECG','ECG2'}),:,:);
     ChanLabels=ChanLabels(~ismember(ChanLabels,{'ECG','ECG2'}));
@@ -65,7 +65,7 @@ rmpath(genpath(path_eeglab));
     %      size(EEG.data)
     nFc=nFc+1;
     
-    load([save_path filesep 'newallSW_' SubID])
+    load([save_path filesep 'new3allSW_' SubID])
     
     %%% Epoch by probe
     evt=EEG.event;
@@ -89,8 +89,11 @@ rmpath(genpath(path_eeglab));
     
     
     for nP=1:40
+        if sum(all_Waves(:,2)==nP)==0
+            continue;
+        end
         for nE=1:length(ChanLabels)
-            all_Waves(all_Waves(:,2)==nP & all_Waves(:,nE)==ChanLabels,16)=probe_EEG(nP,nE,all_Waves(all_Waves(:,2)==nP & all_Waves(:,nE)==ChanLabels,8));
+            all_Waves(all_Waves(:,2)==nP & all_Waves(:,3)==nE,16)=mean(squeeze(probe_EEG(nP,:,all_Waves(all_Waves(:,2)==nP & all_Waves(:,3)==nE,8)))>0)';
         end
     end
     
@@ -102,15 +105,17 @@ rmpath(genpath(path_eeglab));
     paramSW.art_ampl=150; %150
     paramSW.max_posampl=75; %originally 75 as per the NatCom paper
     paramSW.max_Freq=7;
+    paramSW.min_pptionNeg=1;
     
     all_Waves=double(all_Waves);
-%     all_Waves(all_Waves(:,2)==1,:)=[];
+    %     all_Waves(all_Waves(:,2)==1,:)=[];
     all_freq=1./(abs((all_Waves(:,5)-all_Waves(:,7)))./EEG.srate);
     fprintf('... ... %g %% waves discarded because of timing\n',mean(all_Waves(:,7)/EEG.srate>30)*100)
     fprintf('... ... %g %% waves discarded because of frequency\n',mean(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq)*100)
     fprintf('... ... %g %% waves discarded because of max P2P ampl\n',mean(all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl)*100)
     fprintf('... ... %g %% waves discarded because of max pos ampl\n',mean(all_Waves(:,11)>paramSW.max_posampl | all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl)*100)
-    all_Waves(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
+    fprintf('... ... %g %% waves discarded because of pption neg elect\n',mean(all_Waves(:,16)>paramSW.min_pptionNeg)*100)
+    all_Waves(all_Waves(:,16)>paramSW.min_pptionNeg | all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
     
     thr_Wave=[];
     slow_Waves=[];
@@ -119,25 +124,24 @@ rmpath(genpath(path_eeglab));
         temp_p2p=thisE_Waves(:,paramSW.AmpCriterionIdx);
         
         if length(temp_p2p)<100
-            warning(sprintf('not enough waves (<100) to compute a threshold!!! Sub %s Elec %s\n',SubID,chan_labels{nE}))
-            ExGauss=[ExGauss ; nan(1,4)];
+            warning(sprintf('not enough waves (<100) to compute a threshold!!! Sub %s Elec %s\n',SubID,ChanLabels{nE}))
             continue;
         end
         [X,fVal,exitFlag,solverOutput] = exgauss_fit(temp_p2p);
         bins=0:0.1:paramSW.art_ampl;
         p_exgauss=exgauss_pdf(bins,X);
         end_gaussian=2*bins(find(p_exgauss==max(p_exgauss)));
-%         if ismember(ChanLabels{nE},{'FT9','FT10'})
-%             
-%             figure;
-%             histogram(((temp_p2p)),150,'Normalization','probability');
-%             hold on
-%             line([1 1]*prctile(thisE_Waves(:,paramSW.AmpCriterionIdx),paramSW.prticle_Thr),ylim,'Color','r')
-%             line([1 1]*end_gaussian,ylim,'Color','g')
-%             pause;
-%             close(gcf);
-%         end
-        thr_Wave(nE)=prctile(thisE_Waves(:,paramSW.AmpCriterionIdx),paramSW.prticle_Thr);
+        %         if ismember(ChanLabels{nE},{'FT9','FT10'})
+        %
+        %             figure;
+        %             histogram(((temp_p2p)),150,'Normalization','probability');
+        %             hold on
+        %             line([1 1]*prctile(thisE_Waves(:,paramSW.AmpCriterionIdx),paramSW.prticle_Thr),ylim,'Color','r')
+        %             line([1 1]*end_gaussian,ylim,'Color','g')
+        %             pause;
+        %             close(gcf);
+        %         end
+        thr_Wave(nE)=end_gaussian; %prctile(thisE_Waves(:,paramSW.AmpCriterionIdx),paramSW.prticle_Thr);
         %         if ~isempty(paramSW.fixThr)
         %             thr_Wave(nE)=paramSW.fixThr;
         %         else
@@ -159,7 +163,7 @@ rmpath(genpath(path_eeglab));
     
     %%%% check waveform
     
-    temp_ERP=cell(1,length(myERP_Elec));
+    temp_ERP=cell(2,length(myERP_Elec));
     temp_ERP2=cell(2,length(myERP_Elec2));
     for nE=1:length(ChanLabels)
         all_P2P(nFc,nE)=nanmean(slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,5)/EEG.srate<30,4));
@@ -177,7 +181,13 @@ rmpath(genpath(path_eeglab));
                     vec=squeeze(probe_EEG(temp_SW_nProbe(m),nE,(temp_SW(m)-0.5*EEG.srate):(temp_SW(m)+1*EEG.srate)))';
                     vec=vec-mean(vec(1:0.5*EEG.srate));
                     if max(abs(vec))<150
-                        temp_ERP{find(ismember(myERP_Elec,ChanLabels{nE}))}=[temp_ERP{find(ismember(myERP_Elec,ChanLabels{nE}))} ; vec];
+                        temp_ERP{1,find(ismember(myERP_Elec,ChanLabels{nE}))}=[temp_ERP{1,find(ismember(myERP_Elec,ChanLabels{nE}))} ; vec];
+                    end
+                    
+                    vec=squeeze(mean(probe_EEG(temp_SW_nProbe(m),:,(temp_SW(m)-0.5*EEG.srate):(temp_SW(m)+1*EEG.srate)),2))';
+                    vec=vec-mean(vec(1:0.5*EEG.srate));
+                    if max(abs(vec))<150
+                        temp_ERP{2,find(ismember(myERP_Elec,ChanLabels{nE}))}=[temp_ERP{2,find(ismember(myERP_Elec,ChanLabels{nE}))} ; vec];
                     end
                 end
             end
@@ -205,24 +215,26 @@ rmpath(genpath(path_eeglab));
                     end
                 end
             end
-        
-        
+            
+            
         end
     end
     temp_SW_ERP_byElec=[];
     for j=1:length(myERP_Elec)
-        if ~isempty(temp_ERP{j})
-        temp_SW_ERP_byElec(j,:)=mean(temp_ERP{j},1);
+        if ~isempty(temp_ERP{1,j})
+            temp_SW_ERP_byElec(j,1,:)=mean(temp_ERP{1,j},1);
+            temp_SW_ERP_byElec(j,2,:)=mean(temp_ERP{2,j},1);
         else
-            temp_SW_ERP_byElec(j,:)=nan(1,751);
+            temp_SW_ERP_byElec(j,1,:)=nan(1,751);
+            temp_SW_ERP_byElec(j,2,:)=nan(1,751);
         end
     end
-    mean_SW_ERP_byElec=cat(3,mean_SW_ERP_byElec,temp_SW_ERP_byElec);
+    mean_SW_ERP_byElec=cat(4,mean_SW_ERP_byElec,temp_SW_ERP_byElec);
     
-         temp_SW_ERP_byElec2=[];
-   for j=1:length(myERP_Elec2{1})
+    temp_SW_ERP_byElec2=[];
+    for j=1:length(myERP_Elec2{1})
         for k=1:2
-            if ~isempty(temp_ERP2{j})
+            if ~isempty(temp_ERP2{k,j})
                 temp_SW_ERP_byElec2(j,k,:)=mean(temp_ERP2{k,j},1);
             else
                 temp_SW_ERP_byElec2(j,k,:)=nan(1,751);
@@ -238,11 +250,13 @@ end
 figure;
 set(gcf,'Position',[680   371   560   420]);
 for nCh=1:length(myERP_Elec)
-    subplot(2,2,nCh);
-    temp_plot=squeeze(mean_SW_ERP_byElec(nCh,:,:));
+    subplot(3,2,nCh);
+    temp_plot=squeeze(mean_SW_ERP_byElec(nCh,1,:,:));
+    temp_plot2=squeeze(mean_SW_ERP_byElec(nCh,2,:,:));
     
     plot(-0.5:1/EEG.srate:1,temp_plot,'Color','k');
     simpleTplot(-0.5:1/EEG.srate:1,temp_plot',0,[1 0.5 0],0,'-',0.5,1,[],1,4);
+    simpleTplot(-0.5:1/EEG.srate:1,temp_plot2',0,[0.5 0.5 0.5],0,'-',0.5,1,[],1,4);
     format_fig;
     xlabel('Time from onset (s)')
     ylabel('Voltage (\muV)')
@@ -286,7 +300,7 @@ title('Threshold of slow waves detection')
 figure;
 subplot(2,2,1);
 topo_plot=squeeze(mean(nanmean(SW_dens_perProbe,2),1));
-topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
+topo_plot(match_str(ChanLabels,{'TP9','TP10','O1' , 'O2'   , 'P7' ,   'PO7'  ,  'PO8','PO10'}))=0;
 simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
 colorbar;
 title('SW density')
@@ -317,15 +331,33 @@ figure;
 for nB=1:4
     subplot(1,4,nB);
     topo_plot=squeeze(mean(nanmean(SW_dens_perProbe(:,1:10+(nB-1)*10,:),2),1));
-%     topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
+    %     topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
     simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
     colorbar;
-%     caxis([6.5 9.5])
+    %     caxis([6.5 9.5])
 end
 
 %%
+% figure;
+% topo_plot=mean(SW_dens(1:end-1,:),1); %squeeze(mean(mean(SW_dens_perProbe,2),1));
+% simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
+% colorbar;
+% title('SW density')
+
+%%
 figure;
-topo_plot=mean(SW_dens(1:end-1,:),1); %squeeze(mean(mean(SW_dens_perProbe,2),1));
-simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
-colorbar;
-title('SW density')
+set(gcf,'Position',[680   371   560   420]);
+for nCh=1:size(mean_SW_ERP_byElec2,1)
+    subplot(1,2,nCh);
+    temp_plot=squeeze(mean_SW_ERP_byElec2(nCh,1,:,:));
+    temp_plot2=squeeze(mean_SW_ERP_byElec2(nCh,2,:,:));
+    
+    plot(-0.5:1/EEG.srate:1,temp_plot,'Color','k');
+    simpleTplot(-0.5:1/EEG.srate:1,temp_plot',0,[1 0.5 0],0,'-',0.5,1,[],1,4);
+    simpleTplot(-0.5:1/EEG.srate:1,temp_plot2',0,[0.5 0.5 0.5],0,'-',0.5,1,[],1,4);
+    format_fig;
+    xlabel('Time from onset (s)')
+    ylabel('Voltage (\muV)')
+    title(myERP_Elec{nCh})
+    % ylim([-10 3])
+end

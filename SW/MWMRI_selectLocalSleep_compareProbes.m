@@ -14,7 +14,7 @@ ft_defaults
 addpath(genpath(path_eeglab));
 
 % select relevant files, here baseline blocks
-files=dir([data_path filesep filesep 'MWMRI*clean.set']);
+files=dir([data_path filesep filesep 'MWMRI242*clean.set']);
 
 myERP_Elec={'Fz','Cz','Pz','Oz'};
 States={'ON','MW','MB','??'};
@@ -80,7 +80,7 @@ for nF=1:length(files)
     event_time=[evt.latency];
     findProbe_idx=match_str({evt.type},'P  1');
     findProbe_times=event_time(findProbe_idx);
-  
+    
     load([save_path filesep 'SW_' SubID])
     %     slow_Waves(slow_Waves(:,3)==length(ChanLabels),:)=[];
     
@@ -134,6 +134,8 @@ end
 
 
 %% Topography
+SW_table.Elec(SW_table.Elec=='FPz')='Fpz';
+SW_table.Elec(SW_table.Elec=='FP1')='Fp1';
 
 
 % ChanLabels={EEG.chanlocs.labels};
@@ -152,11 +154,11 @@ end
 %%
 figure
 topo_plot=[];
-    for nCh=1:length(layout.label)-2
-        topo_plot(nCh)=nanmean(SW_table.SW_density(SW_table.Elec==layout.label{nCh})); %squeeze(mean(mean(SW_dens_perProbe,2),1));
-    end
-    simpleTopoPlot_ft(topo_plot', layout,'labels',[],0,1);
-    
+for nCh=1:length(layout.label)-2
+    topo_plot(nCh)=nanmean(SW_table.SW_density(SW_table.Elec==layout.label{nCh})); %squeeze(mean(mean(SW_dens_perProbe,2),1));
+end
+simpleTopoPlot_ft(topo_plot', layout,'labels',[],0,1);
+
 %%
 figure;
 for k=1:4
@@ -188,3 +190,92 @@ for nCh=1:length(layout.label)-2
 end
 simpleTopoPlot_ft(topo_plot', layout,'on',[],0,1);
 colorbar;
+
+%%
+SW_table.Elec=categorical(SW_table.Elec);
+
+for nCh=1:length(layout.label)-2
+    
+    mdl_FA=fitlm(SW_table(SW_table.Elec==layout.label{nCh},:),'FAs~1+Probe+SW_density');
+    FA_effect(nCh,1)=mdl_FA.Coefficients.tStat(end);
+    FA_effect(nCh,2)=mdl_FA.Coefficients.pValue(end);
+    
+    mdl_Miss=fitlm(SW_table(SW_table.Elec==layout.label{nCh},:),'Misses~1+Probe+SW_density');
+    Miss_effect(nCh,1)=mdl_Miss.Coefficients.tStat(end);
+    Miss_effect(nCh,2)=mdl_Miss.Coefficients.pValue(end);
+    
+    mdl_RT=fitlm(SW_table(SW_table.Elec==layout.label{nCh},:),'Hit_RT~1+Probe+SW_density');
+    RT_effect(nCh,1)=mdl_RT.Coefficients.tStat(end);
+    RT_effect(nCh,2)=mdl_RT.Coefficients.pValue(end);
+    
+end
+
+
+%%
+cmap2=cbrewer('div','RdBu',64); cmap2=flipud(cmap2);
+
+figure;
+subplot(1,3,2);
+simpleTopoPlot_ft(Miss_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(Miss_effect(:,2)<fdr(Miss_effect(:,2),0.05)), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+colorbar; colormap(cmap2);
+caxis([-1 1]*max(abs(Miss_effect(:,1))))
+title('SW * Miss')
+
+subplot(1,3,1);
+simpleTopoPlot_ft(FA_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(FA_effect(:,2)<fdr(FA_effect(:,2),0.05)), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+colorbar; colormap(cmap2);
+caxis([-1 1]*max(abs(FA_effect(:,1))))
+title('SW * FA')
+
+subplot(1,3,3);
+simpleTopoPlot_ft(RT_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(RT_effect(:,2)<fdr(RT_effect(:,2),0.05)), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+colorbar; colormap(cmap2);
+caxis([-1 1]*max(abs(RT_effect(:,1))))
+title('SW * RT')
+
+%%
+SW_table.State2=SW_table.State;
+SW_table.State2(SW_table.State2=='??')='MB';
+SW_table.State2=removecats(SW_table.State2);
+
+for nCh=1:length(layout.label)-2
+    
+    mdl_State=fitlm(SW_table(SW_table.Elec==layout.label{nCh},:),'SW_density~1+Probe+State2');
+    MW_effect(nCh,1)=mdl_State.Coefficients.tStat(end);
+    MW_effect(nCh,2)=mdl_State.Coefficients.pValue(end);
+    
+    MB_effect(nCh,1)=mdl_State.Coefficients.tStat(end-1);
+    MB_effect(nCh,2)=mdl_State.Coefficients.pValue(end-1);
+    
+    mdl_Vigilance=fitlm(SW_table(SW_table.Elec==layout.label{nCh},:),'SW_density~1+Probe+Vigilance');
+    Vig_effect(nCh,1)=mdl_Vigilance.Coefficients.tStat(end-1);
+    Vig_effect(nCh,2)=mdl_Vigilance.Coefficients.pValue(end-1);
+    
+    
+end
+
+%%
+figure;
+subplot(1,3,1);
+simpleTopoPlot_ft(MW_effect(:,1), layout,'on',[],0,1);
+% ft_plot_lay_me(layout, 'chanindx', find(MW_effect(:,2)<fdr(MW_effect(:,2),0.05)), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+colorbar; colormap(cmap2);
+caxis([-1 1]*max(abs(MW_effect(:,1))))
+title('SW * MW')
+
+subplot(1,3,2);
+simpleTopoPlot_ft(MB_effect(:,1), layout,'on',[],0,1);
+% ft_plot_lay_me(layout, 'chanindx', find(MB_effect(:,2)<fdr(MB_effect(:,2),0.05)), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+colorbar; colormap(cmap2);
+caxis([-1 1]*max(abs(MB_effect(:,1))))
+title('SW * MB')
+
+subplot(1,3,3);
+simpleTopoPlot_ft(Vig_effect(:,1), layout,'on',[],0,1);
+% ft_plot_lay_me(layout, 'chanindx', find(Vig_effect(:,2)<fdr(Vig_effect(:,2),0.05)), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+colorbar; colormap(cmap2);
+caxis([-1 1]*max(abs(Vig_effect(:,1))))
+title('SW * Vig')

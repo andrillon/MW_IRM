@@ -14,10 +14,10 @@ addpath(genpath(lscpTools_path))
 addpath(genpath(path_eeglab))
 
 % select relevant files, here baseline blocks
-files=dir([data_path filesep filesep 'MWMRI*clean2.set']);
+files=dir([data_path filesep filesep 'MWMRI*clean3.set']);
 
 %% loop across trials for baseline blocks
-redo=1;
+redo=0;
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
@@ -30,7 +30,7 @@ for nF=1:length(files)
         SubID=SubID(1:sep(1)-1);
     end
     
-    if redo==0 && exist([save_path filesep 'newallSW_' SubID '.mat'])~=0
+    if redo==0 && exist([save_path filesep 'new3allSW_' SubID '.mat'])~=0
         continue;
     end
     
@@ -93,7 +93,7 @@ for nF=1:length(files)
         end
     end
     fprintf('\n')
-    save([save_path filesep 'newallSW_' SubID],'all_Waves','ChanLabels')
+    save([save_path filesep 'new3allSW_' SubID],'all_Waves','ChanLabels')
     
 %     %     %%% clean detection
 %     paramSW.prticle_Thr=90; % 80 or 90 or 95
