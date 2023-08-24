@@ -3,7 +3,7 @@
 
 %% Init
 clear all;
-% close all;
+close all;
 
 run ../localdef.m
 
@@ -14,8 +14,8 @@ addpath(genpath(FMINSEARCHBND_path))
 % select relevant files, here baseline blocks
 files=dir([data_path filesep filesep 'MWMRI*clean.set']);
 
-myERP_Elec={'Fz','Cz','Pz','Oz','PO7','PO8'};
-myERP_Elec2={{'PO7','F3'},{'PO8','F4'}};
+myERP_Elec={'Fz','Cz','Pz','Oz','C5','C6'};
+myERP_Elec2={{'F7','FT9'},{'F8','FT10'}};
 
 %% loop across trials for baseline blocks
 mean_SW_ERP_byElec=[];
@@ -36,7 +36,7 @@ for nF=1:length(files)
     else
         SubID=SubID(1:sep(1)-1);
     end
-    if exist([save_path filesep 'befICA_allSW_' SubID '.mat'])==0
+    if exist([save_path filesep 'newallSW_' SubID '.mat'])==0
         continue;
     end
     
@@ -65,7 +65,7 @@ for nF=1:length(files)
     %      size(EEG.data)
     nFc=nFc+1;
     
-    load([save_path filesep 'befICA_allSW_' SubID ])
+    load([save_path filesep 'newallSW_' SubID ])
     
     %%% Epoch by probe
     evt=EEG.event;
@@ -123,25 +123,7 @@ for nF=1:length(files)
         thisE_Waves=all_Waves(all_Waves(:,3)==nE,:);
         temp_p2p=thisE_Waves(:,paramSW.AmpCriterionIdx);
         
-        if length(temp_p2p)<100
-            warning(sprintf('not enough waves (<100) to compute a threshold!!! Sub %s Elec %s\n',SubID,ChanLabels{nE}))
-            continue;
-        end
-%         [X,fVal,exitFlag,solverOutput] = exgauss_fit(temp_p2p);
-%         bins=0:0.1:paramSW.art_ampl;
-%         p_exgauss=exgauss_pdf(bins,X);
-%         end_gaussian=2*bins(find(p_exgauss==max(p_exgauss)));
-        %         if ismember(ChanLabels{nE},{'FT9','FT10'})
-        %
-        %             figure;
-        %             histogram(((temp_p2p)),150,'Normalization','probability');
-        %             hold on
-        %             line([1 1]*prctile(thisE_Waves(:,paramSW.AmpCriterionIdx),paramSW.prticle_Thr),ylim,'Color','r')
-        %             line([1 1]*end_gaussian,ylim,'Color','g')
-        %             pause;
-        %             close(gcf);
-        %         end
-%         thr_Wave(nE)=end_gaussian; %
+     
         thr_Wave(nE)=prctile(thisE_Waves(:,paramSW.AmpCriterionIdx),paramSW.prticle_Thr);
         %         if ~isempty(paramSW.fixThr)
         %             thr_Wave(nE)=paramSW.fixThr;
@@ -150,7 +132,7 @@ for nF=1:length(files)
         %         end
         slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
     end
-    save([save_path filesep 'SW_' SubID],'slow_Waves','paramSW')
+    save([save_path filesep 'prct_ICA_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
     
     [nout,xout]=hist(slow_Waves(slow_Waves(:,7)/EEG.srate<30,3),1:length(ChanLabels));
     SW_dens(nFc,:)=nout/(size(EEG.data,2)*size(EEG.data,1)/EEG.srate/60);
@@ -360,6 +342,6 @@ for nCh=1:size(mean_SW_ERP_byElec2,1)
     format_fig;
     xlabel('Time from onset (s)')
     ylabel('Voltage (\muV)')
-    title(myERP_Elec{nCh})
+    title(myERP_Elec2{1}{nCh})
     % ylim([-10 3])
 end

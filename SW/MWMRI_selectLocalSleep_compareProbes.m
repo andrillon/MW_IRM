@@ -14,7 +14,7 @@ ft_defaults
 addpath(genpath(path_eeglab));
 
 % select relevant files, here baseline blocks
-files=dir([data_path filesep filesep 'MWMRI242*clean.set']);
+files=dir([data_path filesep filesep 'MWMRI*clean.set']);
 
 myERP_Elec={'Fz','Cz','Pz','Oz'};
 States={'ON','MW','MB','??'};
@@ -44,13 +44,10 @@ for nF=1:length(files)
     else
         SubID=SubID(1:sep(1)-1);
     end
-    if redo==0 && exist([save_path filesep 'SW_' SubID '.mat'])~=0
+    if exist([save_path filesep 'prct_ICA_SW_' SubID '.mat'])==0
         continue;
     end
-    if exist([save_path filesep 'newallSW_' SubID '.mat'])==0
-        continue;
-    end
-    
+
     % load behaviour
     file_behav=dir([data_path filesep '..' filesep '..' filesep 'Behav' filesep 'wanderIM_behavres_s' SubID(6:end) '*.mat']);
     if ~isempty(file_behav)
@@ -59,35 +56,17 @@ for nF=1:length(files)
         continue;
     end
     
-    % load EEG
-    EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
-    if size(EEG.data,1)<64
-        continue;
-    end
-    ChanLabels={EEG.chanlocs.labels};
-    EEG.data=EEG.data(~ismember(ChanLabels,{'ECG','ECG2'}),:,:);
-    ChanLabels=ChanLabels(~ismember(ChanLabels,{'ECG','ECG2'}));
-    %     evt = ft_read_event([files(nF).folder filesep files(nF).name]);
-    %     data = ft_read_data([files(nF).folder filesep files(nF).name]);
-    fprintf('... ... duration according to EEG data %g minutes\n',size(EEG.data,2)/EEG.srate/60)
+
     %      size(EEG.data)
     nFc=nFc+1;
-    
-    
-    %%% Epoch by probe
-    evt=EEG.event;
-    event_type={evt.type};
-    event_time=[evt.latency];
-    findProbe_idx=match_str({evt.type},'P  1');
-    findProbe_times=event_time(findProbe_idx);
-    
-    load([save_path filesep 'SW_' SubID])
+
+    load([save_path filesep 'prct_ICA_SW_' SubID])
     %     slow_Waves(slow_Waves(:,3)==length(ChanLabels),:)=[];
     
     for nBl=1:max(slow_Waves(:,2))
         slow_Waves_perE=[];
-        duration_probe=abs(EEG.times(1))/1000/60;
-        Fs=EEG.srate;
+        duration_probe=25/60;
+        Fs=500;
         for nE=1:length(ChanLabels)
             slow_Waves_perE=[slow_Waves_perE ; [sum(slow_Waves(:,3)==nE & slow_Waves(:,2)==nBl)/duration_probe nanmean(slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nBl,4)) nanmean(1./((slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nBl,7)-slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nBl,5))/Fs)) ...
                 nanmean(slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nBl,12)) nanmean(slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nBl,13)) NaN nanmean(slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nBl,9)) nanmean(slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nBl,11))]];
@@ -129,7 +108,7 @@ end
 plot(1:40,temp_plot);
 hold on; format_fig;
 for k=[10.5 20.5 30.5]
-    line([1 1]*k,ylim,'Color','k','LineStyle','--')
+    line([1 1]*k,ylim,'Color','k','LineStyle','--') 
 end
 
 
@@ -160,18 +139,28 @@ end
 simpleTopoPlot_ft(topo_plot', layout,'labels',[],0,1);
 
 %%
+caxis_all=[];
 figure;
 for k=1:4
     subplot(2,2,k)
     topo_plot=[];
     for nCh=1:length(layout.label)-2
-        topo_plot(nCh)=nanmean(SW_table.SW_density(SW_table.Elec==layout.label{nCh} & SW_table.Block==k)); %squeeze(mean(mean(SW_dens_perProbe,2),1));
+        topo_plot(nCh)=nanmean(SW_table.SW_density(SW_table.Elec==layout.label{nCh} & SW_table.Vigilance==k)); %squeeze(mean(mean(SW_dens_perProbe,2),1));
     end
     simpleTopoPlot_ft(topo_plot', layout,'on',[],0,1);
     colorbar;
+        title(sprintf('VIG: %g',k))
+        caxis_all=[caxis_all ; [min(topo_plot) max(topo_plot)]];
+
+end
+for k=1:4
+    subplot(2,2,k)
+    caxis([min(caxis_all(:,1)) max(caxis_all(:,2))])
 end
 %%
 figure;
+titleNames={'ON','MW','MB','??'};
+caxis_all=[];
 for k=1:4
     subplot(2,2,k)
     topo_plot=[];
@@ -180,8 +169,13 @@ for k=1:4
     end
     simpleTopoPlot_ft(topo_plot', layout,'on',[],0,1);
     colorbar;
+    title(titleNames{k})
+        caxis_all=[caxis_all ; [min(topo_plot) max(topo_plot)]];
 end
-
+for k=1:4
+    subplot(2,2,k)
+    caxis([min(caxis_all(:,1)) max(caxis_all(:,2))])
+end
 %%
 figure;
 topo_plot=[];
