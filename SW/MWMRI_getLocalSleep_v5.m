@@ -5,16 +5,16 @@
 clear all;
 close all;
 
-%run ../localdef.m
+run ../localdef.m
 
-run /Users/kuszti/Documents/Git/MW_IRM/SW/localdef.m
+% run /Users/kuszti/Documents/Git/MW_IRM/SW/localdef.m
 
 % adding relevant toolboxes to the path
 addpath(genpath(lscpTools_path))
 addpath(genpath(path_eeglab))
 
 % select relevant files, here baseline blocks
-files=dir([data_path filesep filesep 'MWMRI*clean2.set']);
+files=dir([data_path filesep filesep 'MWMRI*clean3.set']);
 
 %% loop across trials for baseline blocks
 redo=1;
@@ -25,25 +25,31 @@ for nF=1:length(files)
     SubID=files(nF).name;
     sep=findstr(SubID,'clean.set');
     if isempty(sep)
-        SubID=SubID(1:end-9);
+        SubID=SubID(1:end-10); %change hardcoding 
     else
         SubID=SubID(1:sep(1)-1);
     end
+%         if ~ismember(SubID,{'MWMRI227'})
+%         continue;
+%         end
     
-    if redo==0 && exist([save_path filesep 'newallSW_' SubID '.mat'])~=0
+    if redo==0 && exist([save_path filesep 'RPAcorr_allSW_' SubID '.mat'])~=0
         continue;
     end
     
     EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
-    if size(EEG.data,1)<63
+    if isempty(EEG.chanlocs)
         continue;
     end
+%     if size(EEG.data,1)<63
+%         continue;
+%     end
     ChanLabels={EEG.chanlocs.labels};
     EEG.data=EEG.data(~ismember(ChanLabels,{'ECG','ECG2'}),:,:);
     ChanLabels=ChanLabels(~ismember(ChanLabels,{'ECG','ECG2'}));
     %     evt = ft_read_event([files(nF).folder filesep files(nF).name]);
     %     data = ft_read_data([files(nF).folder filesep files(nF).name]);
-    fprintf('... ... duration according to EEG data %g minutes\n',size(EEG.data,2)/EEG.srate/60)
+    fprintf('... ... duration according to EEG data %g minutes - %g EEG channels\n',size(EEG.data,2)/EEG.srate/60,size(EEG.data,1))
 %      size(EEG.data)
      
     %%% Epoch by probe
@@ -65,6 +71,40 @@ for nF=1:length(files)
     
     probe_EEG=probe_EEG-repmat(mean(probe_EEG(:,match_str(ChanLabels,{'TP9','TP10'}),:),2),[1,size(probe_EEG,2),1]);
     probe_EEG=probe_EEG-repmat(mean(probe_EEG,3),[1,1,size(probe_EEG,3)]);
+    
+%     filt_probe_EEG=probe_EEG;
+%     for nP=1:40
+%         for nC=1:62
+%             filt_probe_EEG(nP,nC,:)=bandpass(double(squeeze(probe_EEG(nP,nC,:))),EEG.srate,0.5,10,2);
+%         end
+%     end
+%     for nP=1:40
+%         r_eeg=corr(squeeze(filt_probe_EEG(nP,:,:))');
+%     end
+%     filt_probe_EEG2=probe_EEG2;
+%     for nP=1:60
+%         for nC=1:63
+%             filt_probe_EEG2(nP,nC,:)=bandpass(double(squeeze(probe_EEG2(nP,nC,:))),EEG2.srate,0.5,10,2);
+%         end
+%     end
+%     for nP=1:60
+%         r_eeg2=corr(squeeze(filt_probe_EEG2(nP,:,:))');
+%     end
+%     
+%     figure;
+%     subplot(2,1,1);
+%     imagesc(r_eeg(IA(1:15),IA(1:15)));
+%     set(gca,'xTick',1:15,'XTickLabel',ChanLabels(IA(1:15)));
+%     set(gca,'yTick',1:15,'yTickLabel',ChanLabels(IA(1:15)));
+%     colorbar; caxis([-1 1])
+%     title('EEG/fMRI dataset');
+%     format_fig;
+%     subplot(2,1,2); imagesc(r_eeg(IB(1:15),IB(1:15)));
+%     set(gca,'xTick',1:15,'XTickLabel',ChanLabels2(IB(1:15)));
+%     set(gca,'yTick',1:15,'yTickLabel',ChanLabels2(IB(1:15)));
+%     colorbar; caxis([-1 1])
+%  title('EEG NatComm dataset');
+%     format_fig;
     
     all_Waves=[];
     for nP=1:size(probe_EEG,1)
@@ -93,7 +133,7 @@ for nF=1:length(files)
         end
     end
     fprintf('\n')
-    save([save_path filesep 'newallSW_' SubID],'all_Waves','ChanLabels')
+    save([save_path filesep 'RPAcorr_allSW_' SubID],'all_Waves','ChanLabels')
     
 %     %     %%% clean detection
 %     paramSW.prticle_Thr=90; % 80 or 90 or 95

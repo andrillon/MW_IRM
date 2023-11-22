@@ -38,7 +38,7 @@ for nF=1:length(files)
     if exist([save_path filesep 'RPAcorr_allSW_' SubID '.mat'])==0
         continue;
     end
-    if ismember(SubID,{'MWMRI223','MWMRI243'})
+    if ismember(SubID,{'MWMRI223','MWMRI243','MWMRI227'})
         continue;
     end
     % load behaviour
@@ -109,7 +109,7 @@ for nF=1:length(files)
 %     paramSW.min_pptionNeg=1;
     
     all_Waves=double(all_Waves);
-    all_Waves(EEG.times(all_Waves(:,5))<-10000 | EEG.times(all_Waves(:,5))>0,:)=[];
+    all_Waves(EEG.times(all_Waves(:,5))<-20000 | EEG.times(all_Waves(:,5))>0,:)=[];
     all_freq=1./(abs((all_Waves(:,5)-all_Waves(:,7)))./EEG.srate);
     fprintf('... ... %g %% waves discarded because of timing\n',mean(all_Waves(:,7)/EEG.srate>30)*100)
     fprintf('... ... %g %% waves discarded because of frequency\n',mean(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq)*100)
@@ -139,15 +139,15 @@ for nF=1:length(files)
     
     [nout,xout]=hist(slow_Waves(:,3),1:length(ChanLabels));
     all_ChanLabels=[all_ChanLabels ; ChanLabels];
-    SW_dens(nFc,:)=nout/(10/60*40);
+    SW_dens(nFc,:)=nout/(20/60*40);
     allthr_Wave(nFc,:)=thr_Wave;
     [nout,xout]=hist(all_Waves(:,3),1:length(ChanLabels));
-    allSW_dens(nFc,:)=nout/(10/60*40);
+    allSW_dens(nFc,:)=nout/(20/60*40);
     
     SW_dens_perProbe(nFc,:,:)=nan(40,size(EEG.data,1));
     for nP=1:length(findProbe_times)
         [nout,xout]=hist(slow_Waves(slow_Waves(:,2)==nP,3),1:length(ChanLabels));
-        SW_dens_perProbe(nFc,nP,:)=nout/(10/60);
+        SW_dens_perProbe(nFc,nP,:)=nout/(20/60);
     end
     
     %%%% check waveform
@@ -255,6 +255,7 @@ end
 
 %%
 figure;
+subplot(1,2,1)
 simpleTplot(1:40,squeeze(mean(SW_dens_perProbe(:,:,match_str({EEG.chanlocs.labels},'Cz')),3)),0,[1 0.5 0],0,'-',0.5,1,[],1,4);
 hold on; format_fig;
 for k=[10.5 20.5 30.5]
@@ -263,6 +264,14 @@ end
 xlabel('Probes')
 ylabel('SW density')
 
+subplot(1,2,2)
+simpleTplot(1:40,squeeze(mean(SW_dens_perProbe(:,:,match_str({EEG.chanlocs.labels},'Cz')),3)),0,[1 0.5 0],0,'-',0.5,1,[],1,4);
+hold on; format_fig;
+for k=[10.5 20.5 30.5]
+    line([1 1]*k,ylim,'Color','k','LineStyle','--')
+end
+xlabel('Probes')
+ylabel('SW density')
 %% Topography
 addpath((path_fieldtrip))
 ft_defaults;
@@ -323,7 +332,7 @@ title('SW negative slope')
 figure;
 for nB=1:4
     subplot(1,4,nB);
-    topo_plot=squeeze(nanmean(nanmean(SW_dens_perProbe(:,1:10+(nB-1)*10,:),2),1));
+    topo_plot=squeeze(mean(nanmean(SW_dens_perProbe(:,1:10+(nB-1)*10,:),2),1));
     %     topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
     simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
     colorbar;
