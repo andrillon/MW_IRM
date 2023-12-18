@@ -263,6 +263,25 @@ end
 xlabel('Probes')
 ylabel('SW density')
 
+%%
+addpath((path_fieldtrip))
+ft_defaults;
+
+% ChanLabels={EEG.chanlocs.labels};
+ChanLabels(find(ismember(ChanLabels,'FPz')))={'Fpz'};
+ChanLabels(find(ismember(ChanLabels,'FP1')))={'Fp1'};
+
+cfg = [];
+cfg.layout = 'elec1005.lay';
+cfg.center      = 'yes';
+cfg.channel = ChanLabels(~ismember(ChanLabels,{'TP9','TP10'}));
+layout=ft_prepare_layout(cfg);
+% layout.label(match_str(layout.label,{'TP9','TP10'}))=[];
+correspCh=[];
+for nCh=1:length(layout.label)-2
+    correspCh(nCh)=match_str(ChanLabels,layout.label{nCh});
+end
+
 
 %%
 figure;
@@ -288,23 +307,6 @@ for k=1:25
     title(SubID)
 end
 %% Topography
-addpath((path_fieldtrip))
-ft_defaults;
-
-% ChanLabels={EEG.chanlocs.labels};
-ChanLabels(find(ismember(ChanLabels,'FPz')))={'Fpz'};
-ChanLabels(find(ismember(ChanLabels,'FP1')))={'Fp1'};
-
-cfg = [];
-cfg.layout = 'elec1005.lay';
-cfg.center      = 'yes';
-cfg.channel = ChanLabels(~ismember(ChanLabels,{'TP9','TP10'}));
-layout=ft_prepare_layout(cfg);
-% layout.label(match_str(layout.label,{'TP9','TP10'}))=[];
-correspCh=[];
-for nCh=1:length(layout.label)-2
-    correspCh(nCh)=match_str(ChanLabels,layout.label{nCh});
-end
 
 figure;
 topo_plot=mean(allthr_Wave,1); %squeeze(mean(mean(SW_dens_perProbe,2),1));
