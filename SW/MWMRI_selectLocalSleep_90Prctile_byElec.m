@@ -3,7 +3,7 @@
 
 %% Init
 clear all;
-close all;
+% close all;
 
 run ../localdef.m
 
@@ -100,12 +100,12 @@ for nF=1:length(files)
     
     %%% clean detection
     paramSW.prticle_Thr=90; % 80 or 90 or 95
-    paramSW.LimFrqW=[1 7]; % [1 4] or [4 10]
+    paramSW.LimFrqW=[1 4]; % [1 4] or [4 10]
     paramSW.AmpCriterionIdx=4; % 9 (MaxNegpkAmp) or 11 (MaxPosPeakAmp) or 4 (P2P)
     paramSW.fixThr=[];
     paramSW.art_ampl=150; %150
     paramSW.max_posampl=75; %originally 75 as per the NatCom paper
-    paramSW.max_Freq=7;
+    paramSW.max_Freq=4;
 %     paramSW.min_pptionNeg=1;
     
     all_Waves=double(all_Waves);
@@ -263,6 +263,30 @@ end
 xlabel('Probes')
 ylabel('SW density')
 
+
+%%
+figure;
+for k=1:25
+     SubID=files(k).name;
+    sep=findstr(SubID,'clean3.set');
+    
+    if isempty(sep)
+        SubID=SubID(1:end-9);
+    else
+        SubID=SubID(1:sep(1)-1);
+    end
+    
+    subplot(5,5,k);
+    topo_plot=squeeze(nanmean(nanmean(SW_dens_perProbe(k,:,:),2),1));
+    if sum(isnan(topo_plot))==length(topo_plot)
+        continue;
+    end
+    % topo_plot=squeeze(nanmean(SW_dens,1));
+    % topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=0;
+    simpleTopoPlot_ft(topo_plot(correspCh), layout,'on',[],0,1);
+    colorbar;
+    title(SubID)
+end
 %% Topography
 addpath((path_fieldtrip))
 ft_defaults;
