@@ -64,15 +64,22 @@ for nF=1:length(files)
 %     c0=nt_cov(data);
 %     c1=nt_cov(mean(data,3));
 %     [todss,pwr0,pwr1]=nt_dss0(c0,c1);
-%     data_clean=nt_mmat(data,todss(:,4:10));
+%     NREMOVE=4;
+%     data_clean=nt_tsr(data,z(:,1:NREMOVE,:)); %
 % 
-%     % plot results
+%     % plot var explained
 %     figure(1); clf
-%     subplot 121;
-%     plot(mean(data,3)); title('data');
-%     subplot 122;
-%     plot(mean(data_clean,3)); title('recovered');
-
+%     subplot 131;
+%     plot(pwr1./pwr0,'Color','k','LineWidth',3);
+%     line([1 1]*NREMOVE+0.5,ylim,'Color','r','LineWidth',3)
+%     xlabel('Component')
+%     % plot results
+%     subplot 132;
+%     plot(EEG2.times,mean(data,3),'k'); title('data');
+%     hold on; plot(EEG2.times,rms(mean(data,3)'),'Color','r','LineWidth',3)
+%     subplot 133;
+%     plot(EEG2.times,mean(data_clean,3),'k'); title('recovered');
+%     hold on; plot(EEG2.times,rms(mean(data_clean,3)'),'Color','r','LineWidth',3)
 
 
 %     if size(EEG.data,1)<64
