@@ -52,34 +52,36 @@ for nF=1:length(files)
     % load EEG
     addpath(genpath(path_eeglab));
     EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
-%     EEG2 = pop_epoch( EEG, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
-%     EEG2 = pop_rmbase( EEG2, [-500 0] ,[]);
+    EEG2 = pop_epoch( EEG, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
+    EEG2 = pop_rmbase( EEG2, [-500 0] ,[]);
 
     rmpath(genpath(path_eeglab));
 
-%     % apply DSS to clean them
-%     data=EEG2.data;
-%     data([32 65],:,:)=[];
-%     data=permute(data,[2 1 3]);
-%     c0=nt_cov(data);
-%     c1=nt_cov(mean(data,3));
-%     [todss,pwr0,pwr1]=nt_dss0(c0,c1);
-%     NREMOVE=4;
-%     data_clean=nt_tsr(data,z(:,1:NREMOVE,:)); %
-% 
-%     % plot var explained
-%     figure(1); clf
-%     subplot 131;
-%     plot(pwr1./pwr0,'Color','k','LineWidth',3);
-%     line([1 1]*NREMOVE+0.5,ylim,'Color','r','LineWidth',3)
-%     xlabel('Component')
-%     % plot results
-%     subplot 132;
-%     plot(EEG2.times,mean(data,3),'k'); title('data');
-%     hold on; plot(EEG2.times,rms(mean(data,3)'),'Color','r','LineWidth',3)
-%     subplot 133;
-%     plot(EEG2.times,mean(data_clean,3),'k'); title('recovered');
-%     hold on; plot(EEG2.times,rms(mean(data_clean,3)'),'Color','r','LineWidth',3)
+    % apply DSS to clean them
+    addpath(genpath('/Users/thandrillon/Work/local/NoiseTools/'))
+    data=EEG2.data;
+    data([32 65],:,:)=[];
+    data=permute(data,[2 1 3]);
+    c0=nt_cov(data);
+    c1=nt_cov(mean(data,3));
+    [todss,pwr0,pwr1]=nt_dss0(c0,c1);
+    NREMOVE=4;
+    z=nt_mmat(data,todss);
+    data_clean=nt_tsr(data,z(:,1:NREMOVE,:)); %
+
+    % plot var explained
+    figure(1); clf
+    subplot 131;
+    plot(pwr1./pwr0,'Color','k','LineWidth',3);
+    line([1 1]*NREMOVE+0.5,ylim,'Color','r','LineWidth',3)
+    xlabel('Component')
+    % plot results
+    subplot 132;
+    plot(EEG2.times,mean(data,3),'k'); title('data');
+    hold on; plot(EEG2.times,rms(mean(data,3)'),'Color','r','LineWidth',3)
+    subplot 133;
+    plot(EEG2.times,mean(data_clean,3),'k'); title('recovered');
+    hold on; plot(EEG2.times,rms(mean(data_clean,3)'),'Color','r','LineWidth',3)
 
 
 %     if size(EEG.data,1)<64
