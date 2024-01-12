@@ -52,10 +52,9 @@ for nF=1:length(files)
     % load EEG
     addpath(genpath(path_eeglab));
     EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
+    EEG = pop_rmbase( EEG, [-25000 0] ,[]);
     EEG2 = pop_epoch( EEG, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
-    EEG2 = pop_rmbase( EEG2, [-500 0] ,[]);
 
-    rmpath(genpath(path_eeglab));
 
     % apply DSS to clean them
     addpath(genpath('/Users/thandrillon/Work/local/NoiseTools/'))
@@ -71,17 +70,34 @@ for nF=1:length(files)
 
     % plot var explained
     figure(1); clf
-    subplot 131;
+    subplot 141;
     plot(pwr1./pwr0,'Color','k','LineWidth',3);
     line([1 1]*NREMOVE+0.5,ylim,'Color','r','LineWidth',3)
     xlabel('Component')
     % plot results
-    subplot 132;
+    subplot 142;
     plot(EEG2.times,mean(data,3),'k'); title('data');
     hold on; plot(EEG2.times,rms(mean(data,3)'),'Color','r','LineWidth',3)
-    subplot 133;
-    plot(EEG2.times,mean(data_clean,3),'k'); title('recovered');
+    subplot 143;
+    plot(EEG2.times,mean(data_clean,3),'k'); title('recovered 1');
     hold on; plot(EEG2.times,rms(mean(data_clean,3)'),'Color','r','LineWidth',3)
+
+
+    data_probe=EEG.data;
+    data_probe([32 65],:,:)=[];
+    data_probe=permute(data_probe,[2 1 3]);
+    z_probe=nt_mmat(data_probe,todss);
+    data_probe_clean=nt_tsr(data_probe,z_probe(:,1:NREMOVE,:)); %
+
+    EEG3 = EEG;
+    EEG3.data=permute(data_probe_clean,[2 1 3]);
+    EEG3 = pop_epoch( EEG3, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
+%     EEG3 = pop_rmbase( EEG3, [-500 0] ,[]);
+
+     subplot 144;
+    plot(EEG3.times,mean(EEG3.data,3),'k'); title('recovered 2');
+    hold on; plot(EEG3.times,rms(mean(EEG3.data,3)),'Color','r','LineWidth',3)
+    rmpath(genpath(path_eeglab));
 
 
 %     if size(EEG.data,1)<64
