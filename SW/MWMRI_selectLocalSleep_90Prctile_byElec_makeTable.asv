@@ -62,7 +62,7 @@ for nF=1:length(files)
     Fs=500;
     
     %%% clean detection
-    paramSW.prticle_Thr=90; % 80 or 90 or 95
+    paramSW.prticle_Thr=80; % 80 or 90 or 95
     paramSW.LimFrqW=[1 7]; % [1 4] or [4 10]
     paramSW.AmpCriterionIdx=4; % 9 (MaxNegpkAmp) or 11 (MaxPosPeakAmp) or 4 (P2P)
     paramSW.fixThr=[];
@@ -283,51 +283,3 @@ colormap(cmap2);
 caxis([-1 1]*5)
 title('Mind Blanking', 'FontSize', 16)
 % c = colorbar; c.Label.String = 't-value'; c.Label.FontSize = 14; c.Label.Rotation = 270; c.Label.Position(1) = 2.5; c.Ticks = [-8 8]; c.FontSize = 14;
-
-% %% Topography
-% % ChanLabels={EEG.chanlocs.labels};
-% ChanLabels(find(ismember(ChanLabels,'FPz')))={'Fpz'};
-% ChanLabels(find(ismember(ChanLabels,'FP1')))={'Fp1'};
-% 
-% cfg = [];
-% cfg.layout = 'elec1005.lay';
-% cfg.center      = 'yes';
-% cfg.channel = ChanLabels(~ismember(ChanLabels,{'TP9','TP10'}));
-% layout=ft_prepare_layout(cfg);
-% % layout.label(match_str(layout.label,{'TP9','TP10'}))=[];
-% correspCh=[];
-% for nCh=1:length(layout.label)-2
-%     correspCh(nCh)=match_str(ChanLabels,layout.label{nCh});
-% end
-% 
-% figure;
-% subplot(2,2,1);
-% topo_plot=squeeze(nanmean(nanmean(SW_dens_perProbe,2),1));
-% % topo_plot=squeeze(nanmean(SW_dens,1));
-% % topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=0;
-% simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
-% colorbar;
-% title('SW density')
-% 
-% % figure;
-% subplot(2,2,2);
-% topo_plot=squeeze(nanmean(all_P2P,1));
-% topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
-% simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
-% colorbar;
-% title('SW amplitude')
-% 
-% subplot(2,2,3);
-% topo_plot=squeeze(nanmean(all_PosSl,1));
-% topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
-% simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
-% colorbar;
-% title('SW positive slope')
-% 
-% subplot(2,2,4);
-% topo_plot=squeeze(nanmean(all_NegSl,1));
-% topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
-% simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
-% colorbar;
-% title('SW negative slope')
-

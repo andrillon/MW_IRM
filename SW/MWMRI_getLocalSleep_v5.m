@@ -14,7 +14,7 @@ addpath(genpath(lscpTools_path))
 addpath(genpath(path_eeglab))
 
 % select relevant files, here baseline blocks
-files=dir([data_path filesep filesep 'MWMRI*clean3.set']);
+files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
 
 %% loop across trials for baseline blocks
 redo=1;
@@ -23,7 +23,7 @@ for nF=1:length(files)
     fprintf('... file: %s\n',files(nF).name)
     
     SubID=files(nF).name;
-    sep=findstr(SubID,'clean.set');
+    sep=findstr(SubID,'clean5.set');
     if isempty(sep)
         SubID=SubID(1:end-10); %change hardcoding 
     else
@@ -33,7 +33,7 @@ for nF=1:length(files)
 %         continue;
 %         end
     
-    if redo==0 && exist([save_path filesep 'RPAcorr_allSW_' SubID '.mat'])~=0
+    if redo==0 && exist([save_path filesep 'DSS_allSW_' SubID '.mat'])~=0
         continue;
     end
     
@@ -133,7 +133,7 @@ for nF=1:length(files)
         end
     end
     fprintf('\n')
-    save([save_path filesep 'RPAcorr_allSW_' SubID],'all_Waves','ChanLabels')
+    save([save_path filesep 'DSS_allSW_' SubID],'all_Waves','ChanLabels')
     
 %     %     %%% clean detection
 %     paramSW.prticle_Thr=90; % 80 or 90 or 95

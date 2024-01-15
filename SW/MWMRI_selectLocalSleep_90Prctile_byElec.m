@@ -12,7 +12,7 @@ addpath(genpath(lscpTools_path))
 addpath(genpath(exgauss_path))
 addpath(genpath(FMINSEARCHBND_path))
 % select relevant files, here baseline blocks
-files=dir([data_path filesep filesep 'MWMRI*clean3.set']);
+files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
 
 myERP_Elec={'Fz','Cz','Pz','Oz','C5','C6'};
 myERP_Elec2={{'F7','FT9'},{'F8','FT10'}};
@@ -28,20 +28,22 @@ for nF=1:length(files)
     fprintf('... file: %s\n',files(nF).name)
     
     SubID=files(nF).name;
-    sep=findstr(SubID,'clean3.set');
+    sep=findstr(SubID,'clean5.set');
     
     if isempty(sep)
         SubID=SubID(1:end-9);
     else
         SubID=SubID(1:sep(1)-1);
     end
-    if exist([save_path filesep 'RPAcorr_allSW_' SubID '.mat'])==0
+    if exist([save_path filesep 'DSS_allSW_' SubID '.mat'])==0
         continue;
     end
     if ismember(SubID,{'MWMRI223','MWMRI243'})
         continue;
     end
-    % load behaviour
+    if ismember(SubID,{'MWMRI239'})
+        continue;
+    end    % load behaviour
     file_behav=dir([data_path filesep '..' filesep '..' filesep 'Behav' filesep 'wanderIM_behavres_s' SubID(6:end) '*.mat']);
     if ~isempty(file_behav)
         load([file_behav.folder filesep file_behav.name])
@@ -53,50 +55,50 @@ for nF=1:length(files)
     addpath(genpath(path_eeglab));
     EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
     EEG = pop_rmbase( EEG, [-25000 0] ,[]);
-    EEG2 = pop_epoch( EEG, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
+%     EEG2 = pop_epoch( EEG, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
 
 
-    % apply DSS to clean them
-    addpath(genpath('/Users/thandrillon/Work/local/NoiseTools/'))
-    data=EEG2.data;
-    data([32 65],:,:)=[];
-    data=permute(data,[2 1 3]);
-    c0=nt_cov(data);
-    c1=nt_cov(mean(data,3));
-    [todss,pwr0,pwr1]=nt_dss0(c0,c1);
-    NREMOVE=4;
-    z=nt_mmat(data,todss);
-    data_clean=nt_tsr(data,z(:,1:NREMOVE,:)); %
-
-    % plot var explained
-    figure(1); clf
-    subplot 141;
-    plot(pwr1./pwr0,'Color','k','LineWidth',3);
-    line([1 1]*NREMOVE+0.5,ylim,'Color','r','LineWidth',3)
-    xlabel('Component')
-    % plot results
-    subplot 142;
-    plot(EEG2.times,mean(data,3),'k'); title('data');
-    hold on; plot(EEG2.times,rms(mean(data,3)'),'Color','r','LineWidth',3)
-    subplot 143;
-    plot(EEG2.times,mean(data_clean,3),'k'); title('recovered 1');
-    hold on; plot(EEG2.times,rms(mean(data_clean,3)'),'Color','r','LineWidth',3)
-
-
-    data_probe=EEG.data;
-    data_probe([32 65],:,:)=[];
-    data_probe=permute(data_probe,[2 1 3]);
-    z_probe=nt_mmat(data_probe,todss);
-    data_probe_clean=nt_tsr(data_probe,z_probe(:,1:NREMOVE,:)); %
-
-    EEG3 = EEG;
-    EEG3.data=permute(data_probe_clean,[2 1 3]);
-    EEG3 = pop_epoch( EEG3, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
-%     EEG3 = pop_rmbase( EEG3, [-500 0] ,[]);
-
-     subplot 144;
-    plot(EEG3.times,mean(EEG3.data,3),'k'); title('recovered 2');
-    hold on; plot(EEG3.times,rms(mean(EEG3.data,3)),'Color','r','LineWidth',3)
+% %     % apply DSS to clean them
+% %     addpath(genpath('/Users/thandrillon/Work/local/NoiseTools/'))
+% %     data=EEG2.data;
+% %     data([32 65],:,:)=[];
+% %     data=permute(data,[2 1 3]);
+% %     c0=nt_cov(data);
+% %     c1=nt_cov(mean(data,3));
+% %     [todss,pwr0,pwr1]=nt_dss0(c0,c1);
+% %     NREMOVE=4;
+% %     z=nt_mmat(data,todss);
+% %     data_clean=nt_tsr(data,z(:,1:NREMOVE,:)); %
+% % 
+% %     % plot var explained
+% %     figure(1); clf
+% %     subplot 141;
+% %     plot(pwr1./pwr0,'Color','k','LineWidth',3);
+% %     line([1 1]*NREMOVE+0.5,ylim,'Color','r','LineWidth',3)
+% %     xlabel('Component')
+% %     % plot results
+% %     subplot 142;
+% %     plot(EEG2.times,mean(data,3),'k'); title('data');
+% %     hold on; plot(EEG2.times,rms(mean(data,3)'),'Color','r','LineWidth',3)
+% %     subplot 143;
+% %     plot(EEG2.times,mean(data_clean,3),'k'); title('recovered 1');
+% %     hold on; plot(EEG2.times,rms(mean(data_clean,3)'),'Color','r','LineWidth',3)
+% % 
+% % 
+% %     data_probe=EEG.data;
+% %     data_probe([32 65],:,:)=[];
+% %     data_probe=permute(data_probe,[2 1 3]);
+% %     z_probe=nt_mmat(data_probe,todss);
+% %     data_probe_clean=nt_tsr(data_probe,z_probe(:,1:NREMOVE,:)); %
+% % 
+% %     EEG3 = EEG;
+% %     EEG3.data=permute(data_probe_clean,[2 1 3]);
+% %     EEG3 = pop_epoch( EEG3, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
+% % %     EEG3 = pop_rmbase( EEG3, [-500 0] ,[]);
+% % 
+% %      subplot 144;
+% %     plot(EEG3.times,mean(EEG3.data,3),'k'); title('recovered 2');
+% %     hold on; plot(EEG3.times,rms(mean(EEG3.data,3)),'Color','r','LineWidth',3)
     rmpath(genpath(path_eeglab));
 
 
@@ -112,7 +114,7 @@ for nF=1:length(files)
     %      size(EEG.data)
     nFc=nFc+1;
     
-    load([save_path filesep 'RPAcorr_allSW_' SubID ])
+    load([save_path filesep 'DSS_allSW_' SubID ])
     
     %%% Epoch by probe
     evt=EEG.event;
@@ -146,12 +148,12 @@ for nF=1:length(files)
     
     %%% clean detection
     paramSW.prticle_Thr=90; % 80 or 90 or 95
-    paramSW.LimFrqW=[1 4]; % [1 4] or [4 10]
+    paramSW.LimFrqW=[1 7]; % [1 4] or [4 10]
     paramSW.AmpCriterionIdx=4; % 9 (MaxNegpkAmp) or 11 (MaxPosPeakAmp) or 4 (P2P)
     paramSW.fixThr=[];
     paramSW.art_ampl=150; %150
     paramSW.max_posampl=75; %originally 75 as per the NatCom paper
-    paramSW.max_Freq=4;
+    paramSW.max_Freq=7;
 %     paramSW.min_pptionNeg=1;
     
     all_Waves=double(all_Waves);
@@ -181,7 +183,7 @@ for nF=1:length(files)
    
          slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
      end
-    save([save_path filesep 'prct_RPA_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
+    save([save_path filesep 'prct_DSS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
     
     [nout,xout]=hist(slow_Waves(:,3),1:length(ChanLabels));
     all_ChanLabels=[all_ChanLabels ; ChanLabels];
@@ -331,7 +333,7 @@ end
 
 %%
 figure;
-for k=1:25
+for k=1:size(SW_dens_perProbe,1)
      SubID=files(k).name;
     sep=findstr(SubID,'clean3.set');
     
