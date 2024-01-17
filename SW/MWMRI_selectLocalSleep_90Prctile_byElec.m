@@ -12,7 +12,7 @@ addpath(genpath(lscpTools_path))
 addpath(genpath(exgauss_path))
 addpath(genpath(FMINSEARCHBND_path))
 % select relevant files, here baseline blocks
-files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
+files=dir([data_path filesep filesep 'MWMRI*clean3.set']);
 
 myERP_Elec={'Fz','Cz','Pz','Oz','C5','C6'};
 myERP_Elec2={{'F7','FT9'},{'F8','FT10'}};
@@ -28,7 +28,7 @@ for nF=1:length(files)
     fprintf('... file: %s\n',files(nF).name)
     
     SubID=files(nF).name;
-    sep=findstr(SubID,'clean5.set');
+    sep=findstr(SubID,'clean3.set');
     
     if isempty(sep)
         SubID=SubID(1:end-9);
@@ -55,50 +55,50 @@ for nF=1:length(files)
     addpath(genpath(path_eeglab));
     EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
     EEG = pop_rmbase( EEG, [-25000 0] ,[]);
-%     EEG2 = pop_epoch( EEG, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
+    EEG2 = pop_epoch( EEG, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
 
 
-% %     % apply DSS to clean them
-% %     addpath(genpath('/Users/thandrillon/Work/local/NoiseTools/'))
-% %     data=EEG2.data;
-% %     data([32 65],:,:)=[];
-% %     data=permute(data,[2 1 3]);
-% %     c0=nt_cov(data);
-% %     c1=nt_cov(mean(data,3));
-% %     [todss,pwr0,pwr1]=nt_dss0(c0,c1);
-% %     NREMOVE=4;
-% %     z=nt_mmat(data,todss);
-% %     data_clean=nt_tsr(data,z(:,1:NREMOVE,:)); %
-% % 
-% %     % plot var explained
-% %     figure(1); clf
-% %     subplot 141;
-% %     plot(pwr1./pwr0,'Color','k','LineWidth',3);
-% %     line([1 1]*NREMOVE+0.5,ylim,'Color','r','LineWidth',3)
-% %     xlabel('Component')
-% %     % plot results
-% %     subplot 142;
-% %     plot(EEG2.times,mean(data,3),'k'); title('data');
-% %     hold on; plot(EEG2.times,rms(mean(data,3)'),'Color','r','LineWidth',3)
-% %     subplot 143;
-% %     plot(EEG2.times,mean(data_clean,3),'k'); title('recovered 1');
-% %     hold on; plot(EEG2.times,rms(mean(data_clean,3)'),'Color','r','LineWidth',3)
-% % 
-% % 
-% %     data_probe=EEG.data;
-% %     data_probe([32 65],:,:)=[];
-% %     data_probe=permute(data_probe,[2 1 3]);
-% %     z_probe=nt_mmat(data_probe,todss);
-% %     data_probe_clean=nt_tsr(data_probe,z_probe(:,1:NREMOVE,:)); %
-% % 
-% %     EEG3 = EEG;
-% %     EEG3.data=permute(data_probe_clean,[2 1 3]);
-% %     EEG3 = pop_epoch( EEG3, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
-% % %     EEG3 = pop_rmbase( EEG3, [-500 0] ,[]);
-% % 
-% %      subplot 144;
-% %     plot(EEG3.times,mean(EEG3.data,3),'k'); title('recovered 2');
-% %     hold on; plot(EEG3.times,rms(mean(EEG3.data,3)),'Color','r','LineWidth',3)
+    % apply DSS to clean them
+    addpath(genpath('/Users/thandrillon/Work/local/NoiseTools/'))
+    data=EEG2.data;
+    data([32 65],:,:)=[];
+    data=permute(data,[2 1 3]);
+    c0=nt_cov(data);
+    c1=nt_cov(mean(data,3));
+    [todss,pwr0,pwr1]=nt_dss0(c0,c1);
+    NREMOVE=4;
+    z=nt_mmat(data,todss);
+    data_clean=nt_tsr(data,z(:,1:NREMOVE,:)); %
+
+    % plot var explained
+    figure(1); clf
+    subplot 141;
+    plot(pwr1./pwr0,'Color','k','LineWidth',3);
+    line([1 1]*NREMOVE+0.5,ylim,'Color','r','LineWidth',3)
+    xlabel('Component')
+    % plot results
+    subplot 142;
+    plot(EEG2.times,mean(data,3),'k'); title('data');
+    hold on; plot(EEG2.times,rms(mean(data,3)'),'Color','r','LineWidth',3)
+    subplot 143;
+    plot(EEG2.times,mean(data_clean,3),'k'); title('recovered 1');
+    hold on; plot(EEG2.times,rms(mean(data_clean,3)'),'Color','r','LineWidth',3)
+
+
+    data_probe=EEG.data;
+    data_probe([32 65],:,:)=[];
+    data_probe=permute(data_probe,[2 1 3]);
+    z_probe=nt_mmat(data_probe,todss);
+    data_probe_clean=nt_tsr(data_probe,z_probe(:,1:NREMOVE,:)); %
+
+    EEG3 = EEG;
+    EEG3.data=permute(data_probe_clean,[2 1 3]);
+    EEG3 = pop_epoch( EEG3, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
+%     EEG3 = pop_rmbase( EEG3, [-500 0] ,[]);
+
+     subplot 144;
+    plot(EEG3.times,mean(EEG3.data,3),'k'); title('recovered 2');
+    hold on; plot(EEG3.times,rms(mean(EEG3.data,3)),'Color','r','LineWidth',3)
     rmpath(genpath(path_eeglab));
 
 
