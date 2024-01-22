@@ -11,7 +11,6 @@ run ../localdef.m
 
 % adding relevant toolboxes to the path
 addpath(genpath(lscpTools_path))
-addpath(genpath(path_eeglab))
 
 % select relevant files, here baseline blocks
 files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
@@ -37,7 +36,10 @@ for nF=1:length(files)
         continue;
     end
     
-    EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
+    addpath(genpath(path_eeglab))
+EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
+rmpath(genpath(path_eeglab))
+
     if isempty(EEG.chanlocs)
         continue;
     end
