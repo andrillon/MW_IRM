@@ -55,7 +55,6 @@ for nF=1:length(files)
     if nFc==1
         addpath(genpath(path_eeglab));
     EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
-    ChanLabels={EEG.chanlocs.labels};
     rmpath(genpath(path_eeglab));
     end
     
