@@ -12,7 +12,7 @@ addpath(genpath(lscpTools_path))
 addpath(genpath(exgauss_path))
 addpath(genpath(FMINSEARCHBND_path))
 % select relevant files, here baseline blocks
-files=dir([data_path filesep filesep 'MWMRI*clean3.set']);
+files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
 
 myERP_Elec={'Fz','Cz','Pz','Oz','C5','C6'};
 myERP_Elec2={{'F7','FT9'},{'F8','FT10'}};
@@ -28,7 +28,7 @@ for nF=1:length(files)
     fprintf('... file: %s\n',files(nF).name)
     
     SubID=files(nF).name;
-    sep=findstr(SubID,'clean3.set');
+    sep=findstr(SubID,'clean5.set');
     
     if isempty(sep)
         SubID=SubID(1:end-9);
@@ -41,9 +41,7 @@ for nF=1:length(files)
     if ismember(SubID,{'MWMRI223','MWMRI243'})
         continue;
     end
-    if ismember(SubID,{'MWMRI239'})
-        continue;
-    end    % load behaviour
+     % load behaviour
     file_behav=dir([data_path filesep '..' filesep '..' filesep 'Behav' filesep 'wanderIM_behavres_s' SubID(6:end) '*.mat']);
     if ~isempty(file_behav)
         load([file_behav.folder filesep file_behav.name])
