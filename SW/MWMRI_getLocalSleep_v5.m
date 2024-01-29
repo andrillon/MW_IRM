@@ -16,7 +16,7 @@ addpath(genpath(lscpTools_path))
 files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
 
 %% loop across trials for baseline blocks
-redo=1;
+redo=0;
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
