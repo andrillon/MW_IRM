@@ -197,6 +197,7 @@ for nF=1:length(files)
     for nBl=1:length(uniqueBlocksSW)
         slow_Waves(oldBlockNumbers==uniqueBlocksSW(nBl),2)=all_probes(nBl);
     end
+    slow_Waves(:,end+1)=oldBlockNumbers;
     save([save_path filesep 'prct_DSS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
     
     [nout,xout]=hist(slow_Waves(:,3),1:length(ChanLabels));
@@ -224,7 +225,7 @@ for nF=1:length(files)
         all_PosSl(nFc,nE)=nanmean(slow_Waves(slow_Waves(:,3)==nE,13));
         
         temp_SW=slow_Waves(slow_Waves(:,3)==nE,5);
-        temp_SW_nProbe=slow_Waves(slow_Waves(:,3)==nE,2);
+        temp_SW_nProbe=slow_Waves(slow_Waves(:,3)==nE,16);
         time_SW=EEG.times(temp_SW)/1000;
         
         if ismember(ChanLabels{nE},myERP_Elec)
@@ -258,7 +259,7 @@ for nF=1:length(files)
             end
             this_PairE=match_str(ChanLabels,myERP_Elec2{2}(ismember(myERP_Elec2{1},ChanLabels{nE})));
             temp_SW=slow_Waves(slow_Waves(:,3)==this_PairE,5);
-            temp_SW_nProbe=slow_Waves(slow_Waves(:,3)==this_PairE ,2);
+            temp_SW_nProbe=slow_Waves(slow_Waves(:,3)==this_PairE ,16);
             for m=1:length(temp_SW)
                 if temp_SW(m)-0.5*EEG.srate>0 && temp_SW(m)+1*EEG.srate<25*EEG.srate
                     vec=squeeze(probe_EEG(temp_SW_nProbe(m),nE,(temp_SW(m)-0.5*EEG.srate):(temp_SW(m)+1*EEG.srate)))';

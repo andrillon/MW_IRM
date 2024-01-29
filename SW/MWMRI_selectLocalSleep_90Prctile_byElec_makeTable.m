@@ -170,15 +170,15 @@ clear *_effect
 newlabels=layout.label(1:end-2);
 for nCh=1:length(newlabels)
     
-    mdl_FA=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_FA~1+Block+SW_density+(1|SubID)');
+    mdl_FA=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_FA~1+Block+SW_density+(1+Block|SubID)');
     FA_effect(nCh,1)=mdl_FA.Coefficients.tStat(match_str(mdl_FA.CoefficientNames,'SW_density'));
     FA_effect(nCh,2)=mdl_FA.Coefficients.pValue(match_str(mdl_FA.CoefficientNames,'SW_density'));
     
-    mdl_Miss=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Miss~1+Block+SW_density+(1|SubID)');
+    mdl_Miss=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Miss~1+Block+SW_density+(1+Block|SubID)');
     Miss_effect(nCh,1)=mdl_Miss.Coefficients.tStat(match_str(mdl_Miss.CoefficientNames,'SW_density'));
     Miss_effect(nCh,2)=mdl_Miss.Coefficients.pValue(match_str(mdl_Miss.CoefficientNames,'SW_density'));
     
-    mdl_RT=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_HitRT~1+Block+SW_density+(1|SubID)');
+    mdl_RT=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_HitRT~1+Block+SW_density+(1+Block|SubID)');
     RT_effect(nCh,1)=mdl_RT.Coefficients.tStat(match_str(mdl_RT.CoefficientNames,'SW_density'));
     RT_effect(nCh,2)=mdl_RT.Coefficients.pValue(match_str(mdl_RT.CoefficientNames,'SW_density'));
     
