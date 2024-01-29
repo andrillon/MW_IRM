@@ -25,6 +25,7 @@ States={'ON','MW','MB','DK'};
 %% loop across trials for baseline blocks
 nFc=0;
 all_SW_probes=[];
+window_before_probes=20; % in seconds
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
@@ -38,9 +39,6 @@ for nF=1:length(files)
         SubID=SubID(1:sep(1)-1);
     end
     if exist([save_path filesep 'DSS_allSW_' SubID '.mat'])==0
-        continue;
-    end
-    if ismember(SubID,{'MWMRI223','MWMRI243','MWMRI239'})
         continue;
     end
     % load behaviour
@@ -72,7 +70,7 @@ for nF=1:length(files)
     %     paramSW.min_pptionNeg=1;
     
     all_Waves=double(all_Waves);
-    all_Waves(EEG.times(all_Waves(:,5))<-20000 | EEG.times(all_Waves(:,5))>0,:)=[];
+    all_Waves(EEG.times(all_Waves(:,5))<-window_before_probes*1000 | EEG.times(all_Waves(:,5))>0,:)=[];
     all_freq=1./(abs((all_Waves(:,5)-all_Waves(:,7)))./Fs);
     fprintf('... ... %g %% waves discarded because of timing\n',mean(all_Waves(:,7)/Fs>30)*100)
     fprintf('... ... %g %% waves discarded because of frequency\n',mean(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq)*100)
@@ -95,7 +93,7 @@ for nF=1:length(files)
     
     for nP=unique(slow_Waves(:,2))'
         slow_Waves_perE=[];
-        duration_of_probe=20/60;
+        duration_of_probe=window_before_probes/60;
         
         temp_test_res=test_res(test_res(:,1)==probe_res(nP,5) & test_res(:,4)<=probe_res(nP,7),:);
         temp_go=temp_test_res(temp_test_res(:,5)~=3,:);

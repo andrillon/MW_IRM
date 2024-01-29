@@ -17,12 +17,14 @@ files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
 myERP_Elec={'Fz','Cz','Pz','Oz','C5','C6'};
 myERP_Elec2={{'F7','FT9'},{'F8','FT10'}};
 
+load ../Datasetinfo_10-Mar-2023-14-49-21.mat
 %% loop across trials for baseline blocks
 mean_SW_ERP_byElec=[];
 mean_SW_ERP_byElec2=[];
 all_ChanLabels=[];
 nFc=0;
 all_SW_probes=[];
+window_before_probes=20; % in seconds
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
@@ -36,9 +38,6 @@ for nF=1:length(files)
         SubID=SubID(1:sep(1)-1);
     end
     if exist([save_path filesep 'DSS_allSW_' SubID '.mat'])==0
-        continue;
-    end
-    if ismember(SubID,{'MWMRI223','MWMRI243'})
         continue;
     end
    % load behaviour
@@ -155,7 +154,7 @@ for nF=1:length(files)
 %     paramSW.min_pptionNeg=1;
     
     all_Waves=double(all_Waves);
-    all_Waves(EEG.times(all_Waves(:,5))<-10000 | EEG.times(all_Waves(:,5))>0,:)=[];
+    all_Waves(EEG.times(all_Waves(:,5))<-window_before_probes*1000 | EEG.times(all_Waves(:,5))>0,:)=[];
     all_freq=1./(abs((all_Waves(:,5)-all_Waves(:,7)))./EEG.srate);
     fprintf('... ... %g %% waves discarded because of timing\n',mean(all_Waves(:,7)/EEG.srate>30)*100)
     fprintf('... ... %g %% waves discarded because of frequency\n',mean(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq)*100)
@@ -165,6 +164,18 @@ for nF=1:length(files)
     all_Waves(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
 %     all_Waves(all_Waves(:,16)>paramSW.min_pptionNeg | all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
     
+% find missing probes
+    this_row=find_trials({Dataset.name},SubID);
+    if ~isempty(this_row)
+        if isempty(Dataset(this_row).BadEpochs)
+            probes_missing=[];
+        else
+            probes_missing=Dataset(this_row).BadEpochs{1};
+        end
+    end
+    all_probes=1:40;
+    all_probes=setdiff(all_probes,probes_missing);
+
     thr_Wave=[];
     slow_Waves=[];
     for nE=1:length(ChanLabels)
@@ -180,20 +191,27 @@ for nF=1:length(files)
         %         end
    
          slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
-     end
+    end
+    oldBlockNumbers=slow_Waves(:,2);
+    uniqueBlocksSW=unique(oldBlockNumbers);
+    for nBl=1:length(uniqueBlocksSW)
+        slow_Waves(oldBlockNumbers==uniqueBlocksSW(nBl),2)=all_probes(nBl);
+    end
     save([save_path filesep 'prct_DSS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
     
     [nout,xout]=hist(slow_Waves(:,3),1:length(ChanLabels));
     all_ChanLabels=[all_ChanLabels ; ChanLabels];
-    SW_dens(nFc,:)=nout/(10/60*40);
+    SW_dens(nFc,:)=nout/(window_before_probes/60*40);
     allthr_Wave(nFc,:)=thr_Wave;
     [nout,xout]=hist(all_Waves(:,3),1:length(ChanLabels));
-    allSW_dens(nFc,:)=nout/(10/60*40);
+    allSW_dens(nFc,:)=nout/(window_before_probes/60*40);
     
     SW_dens_perProbe(nFc,:,:)=nan(40,size(EEG.data,1));
-    for nP=1:length(findProbe_times)
+
+    SW_dens_perProbe(nFc,1:40,1:63)=nan;
+    for nP=all_probes
         [nout,xout]=hist(slow_Waves(slow_Waves(:,2)==nP,3),1:length(ChanLabels));
-        SW_dens_perProbe(nFc,nP,:)=nout/(10/60);
+        SW_dens_perProbe(nFc,nP,:)=nout/(window_before_probes/60);
     end
     
     %%%% check waveform
@@ -278,7 +296,8 @@ for nF=1:length(files)
     end
     mean_SW_ERP_byElec2=cat(4,mean_SW_ERP_byElec2,temp_SW_ERP_byElec2);
     
-    all_SW_probes=[all_SW_probes ; str2num(SubID(6:end))*ones(size(probe_res,1),1) probe_res(:,[1 5 17 18 19]) squeeze(nanmean(SW_dens_perProbe(nFc,:,:),3))' squeeze(SW_dens_perProbe(nFc,:,:))];
+    probe_res(:,1)=probe_res(:,1)+10*(probe_res(:,5)-1);
+    all_SW_probes=[all_SW_probes ; str2num(SubID(6:end))*ones(size(probe_res,1)-sum(ismember(probe_res(:,1),probes_missing)),1) probe_res(~ismember(probe_res(:,1),probes_missing),[1 5 17 18 19]) squeeze(nanmean(SW_dens_perProbe(nFc,~ismember(probe_res(:,1),probes_missing),:),3))' squeeze(SW_dens_perProbe(nFc,~ismember(probe_res(:,1),probes_missing),:))];
 end
 
 %%
