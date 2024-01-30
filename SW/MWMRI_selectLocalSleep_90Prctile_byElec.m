@@ -24,7 +24,7 @@ mean_SW_ERP_byElec2=[];
 all_ChanLabels=[];
 nFc=0;
 all_SW_probes=[];
-window_before_probes=20; % in seconds
+window_before_probes=10; % in seconds
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
@@ -51,7 +51,7 @@ for nF=1:length(files)
     % load EEG
     addpath(genpath(path_eeglab));
     EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
-    EEG = pop_rmbase( EEG, [-25000 0] ,[]);
+%    EEG = pop_rmbase( EEG, [-25000 0] ,[]);
 %     EEG2 = pop_epoch( EEG, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
 
 
@@ -333,7 +333,7 @@ ylabel('SW density')
 addpath((path_fieldtrip))
 ft_defaults;
 
-% ChanLabels={EEG.chanlocs.labels};
+ChanLabels={EEG.chanlocs.labels};
 ChanLabels(find(ismember(ChanLabels,'FPz')))={'Fpz'};
 ChanLabels(find(ismember(ChanLabels,'FP1')))={'Fp1'};
 

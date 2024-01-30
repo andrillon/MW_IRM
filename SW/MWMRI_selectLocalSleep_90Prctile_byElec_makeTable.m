@@ -25,7 +25,7 @@ States={'ON','MW','MB','DK'};
 %% loop across trials for baseline blocks
 nFc=0;
 all_SW_probes=[];
-window_before_probes=20; % in seconds
+window_before_probes=10; % in seconds
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
