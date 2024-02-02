@@ -5,14 +5,16 @@
 clear all;
 close all;
 
-run ../localdef.m
+run /Users/kuszti/Documents/Git/MW_IRM/SW/localdef.m
 
 % adding relevant toolboxes to the path
 addpath(genpath(lscpTools_path))
 addpath(genpath(exgauss_path))
 addpath(genpath(FMINSEARCHBND_path))
+addpath(path_fieldtrip)
+
 % select relevant files, here baseline blocks
-files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
+files=dir([data_path filesep filesep 'MWMRI*clean3.set']);
 
 
 %%
@@ -25,20 +27,22 @@ States={'ON','MW','MB','DK'};
 %% loop across trials for baseline blocks
 nFc=0;
 all_SW_probes=[];
-window_before_probes=10; % in seconds
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
     
     SubID=files(nF).name;
-    sep=findstr(SubID,'clean5.set');
+    sep=findstr(SubID,'clean3.set');
     
     if isempty(sep)
         SubID=SubID(1:end-9);
     else
         SubID=SubID(1:sep(1)-1);
     end
-    if exist([save_path filesep 'DSS_allSW_' SubID '.mat'])==0
+    if exist([save_path filesep 'RPAcorr_allSW_' SubID '.mat'])==0
+        continue;
+    end
+    if ismember(SubID,{'MWMRI223','MWMRI243'})
         continue;
     end
     % load behaviour
@@ -56,7 +60,7 @@ for nF=1:length(files)
     rmpath(genpath(path_eeglab));
     end
     
-    load([save_path filesep 'DSS_allSW_' SubID ])
+    load([save_path filesep 'RPAcorr_allSW_' SubID ])
     Fs=500;
     
     %%% clean detection
@@ -70,7 +74,7 @@ for nF=1:length(files)
     %     paramSW.min_pptionNeg=1;
     
     all_Waves=double(all_Waves);
-    all_Waves(EEG.times(all_Waves(:,5))<-window_before_probes*1000 | EEG.times(all_Waves(:,5))>0,:)=[];
+    all_Waves(EEG.times(all_Waves(:,5))<-10000 | EEG.times(all_Waves(:,5))>0,:)=[];
     all_freq=1./(abs((all_Waves(:,5)-all_Waves(:,7)))./Fs);
     fprintf('... ... %g %% waves discarded because of timing\n',mean(all_Waves(:,7)/Fs>30)*100)
     fprintf('... ... %g %% waves discarded because of frequency\n',mean(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq)*100)
@@ -89,16 +93,17 @@ for nF=1:length(files)
         thr_Wave(nE)=prctile(thisE_Waves(:,paramSW.AmpCriterionIdx),paramSW.prticle_Thr);
         slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
     end
-    save([save_path filesep 'prct_DSS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
-    
+    %save([save_path filesep 'prct_RPA_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
+
+
     for nP=unique(slow_Waves(:,2))'
         slow_Waves_perE=[];
-        duration_of_probe=window_before_probes/60;
+        duration_of_probe=10/60;
         
         temp_test_res=test_res(test_res(:,1)==probe_res(nP,5) & test_res(:,4)<=probe_res(nP,7),:);
         temp_go=temp_test_res(temp_test_res(:,5)~=3,:);
              temp_nogo=temp_test_res(temp_test_res(:,5)==3,:);
-   if size(temp_go,1)<18 || size(temp_nogo,1)<2
+        if size(temp_go,1)<18 || size(temp_nogo,1)<2
             warning(sprintf('... skipping probe %g in block %g from %s because missing data',probe_res(nP,1),probe_res(nP,5),SubID))
             continue;
         end
@@ -170,15 +175,15 @@ clear *_effect
 newlabels=layout.label(1:end-2);
 for nCh=1:length(newlabels)
     
-    mdl_FA=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_FA~1+Block+SW_density+(1+Block|SubID)');
+    mdl_FA=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_FA~1+Block+SW_density+(1|SubID)');
     FA_effect(nCh,1)=mdl_FA.Coefficients.tStat(match_str(mdl_FA.CoefficientNames,'SW_density'));
     FA_effect(nCh,2)=mdl_FA.Coefficients.pValue(match_str(mdl_FA.CoefficientNames,'SW_density'));
     
-    mdl_Miss=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Miss~1+Block+SW_density+(1+Block|SubID)');
+    mdl_Miss=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Miss~1+Block+SW_density+(1|SubID)');
     Miss_effect(nCh,1)=mdl_Miss.Coefficients.tStat(match_str(mdl_Miss.CoefficientNames,'SW_density'));
     Miss_effect(nCh,2)=mdl_Miss.Coefficients.pValue(match_str(mdl_Miss.CoefficientNames,'SW_density'));
     
-    mdl_RT=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_HitRT~1+Block+SW_density+(1+Block|SubID)');
+    mdl_RT=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_HitRT~1+Block+SW_density+(1|SubID)');
     RT_effect(nCh,1)=mdl_RT.Coefficients.tStat(match_str(mdl_RT.CoefficientNames,'SW_density'));
     RT_effect(nCh,2)=mdl_RT.Coefficients.pValue(match_str(mdl_RT.CoefficientNames,'SW_density'));
     
@@ -204,19 +209,19 @@ table_SW.SART_MB(table_SW.SART_State=='MB' | table_SW.SART_State=='DK')=1;
 table_SW.SART_MB(table_SW.SART_State=='ON')=0;
 
 for nCh=1:length(newlabels)
-    mdl_MW=fitglme(table_SW(table_SW.Elec==newlabels{nCh} & isnan(table_SW.SART_MW)==0,:),'SART_MW~1+Block+SW_density+(1+Block|SubID)','Distribution','binomial');
+    mdl_MW=fitglme(table_SW(table_SW.Elec==newlabels{nCh} & isnan(table_SW.SART_MW)==0,:),'SART_MW~1+Block+SW_density+(1|SubID)','Distribution','binomial');
     MW_effect(nCh,1)=mdl_MW.Coefficients.tStat(match_str(mdl_MW.CoefficientNames,'SW_density'));
     MW_effect(nCh,2)=mdl_MW.Coefficients.pValue(match_str(mdl_MW.CoefficientNames,'SW_density'));
     
-    mdl_MB=fitglme(table_SW(table_SW.Elec==newlabels{nCh} & isnan(table_SW.SART_MB)==0,:),'SART_MB~1+Block+SW_density+(1+Block|SubID)','Distribution','binomial');
+    mdl_MB=fitglme(table_SW(table_SW.Elec==newlabels{nCh} & isnan(table_SW.SART_MB)==0,:),'SART_MB~1+Block+SW_density+(1|SubID)','Distribution','binomial');
     MB_effect(nCh,1)=mdl_MB.Coefficients.tStat(match_str(mdl_MB.CoefficientNames,'SW_density'));
     MB_effect(nCh,2)=mdl_MB.Coefficients.pValue(match_str(mdl_MB.CoefficientNames,'SW_density'));
     
-    mdl_ON=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_density+(1+Block|SubID)','Distribution','binomial');
+    mdl_ON=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_density+(1|SubID)','Distribution','binomial');
     ON_effect(nCh,1)=mdl_ON.Coefficients.tStat(match_str(mdl_ON.CoefficientNames,'SW_density'));
     ON_effect(nCh,2)=mdl_ON.Coefficients.pValue(match_str(mdl_ON.CoefficientNames,'SW_density'));
     
-    mdl_VIG=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Vig~1+Block+SW_density+(1+Block|SubID)');
+    mdl_VIG=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Vig~1+Block+SW_density+(1|SubID)');
     VIG_effect(nCh,1)=mdl_VIG.Coefficients.tStat(match_str(mdl_VIG.CoefficientNames,'SW_density'));
     VIG_effect(nCh,2)=mdl_VIG.Coefficients.pValue(match_str(mdl_VIG.CoefficientNames,'SW_density'));
 
@@ -226,7 +231,7 @@ end
 
 effect = [Miss_effect(:,1), FA_effect(:,1), RT_effect(:,1), MB_effect(:,1), MW_effect(:,1), VIG_effect(:,1)];
 all_pV = [Miss_effect(:,2); FA_effect(:,2); RT_effect(:,2); MB_effect(:,2); MW_effect(:,2); VIG_effect(:,2)];
-FDR_Thr=0.05; %fdr(all_pV,0.05);
+FDR_Thr=fdr(all_pV,0.05);
 cmap2=cbrewer('div','RdBu',64); cmap2=flipud(cmap2);
 minmax = ceil(max(max(abs(effect))));
 
@@ -258,12 +263,12 @@ caxis([-1 1]*5)
 title('Reaction Times', 'FontSize', 16)
 
 subplot(2,3,4);
-simpleTopoPlot_ft(VIG_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(VIG_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+simpleTopoPlot_ft(ON_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ON_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
 %colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('Vigilance', 'FontSize', 16)
+title('Task Focus', 'FontSize', 16)
 
 subplot(2,3,5);
 simpleTopoPlot_ft(MW_effect(:,1), layout,'on',[],0,1);
@@ -281,51 +286,3 @@ colormap(cmap2);
 caxis([-1 1]*5)
 title('Mind Blanking', 'FontSize', 16)
 % c = colorbar; c.Label.String = 't-value'; c.Label.FontSize = 14; c.Label.Rotation = 270; c.Label.Position(1) = 2.5; c.Ticks = [-8 8]; c.FontSize = 14;
-
-% %% Topography
-% % ChanLabels={EEG.chanlocs.labels};
-% ChanLabels(find(ismember(ChanLabels,'FPz')))={'Fpz'};
-% ChanLabels(find(ismember(ChanLabels,'FP1')))={'Fp1'};
-% 
-% cfg = [];
-% cfg.layout = 'elec1005.lay';
-% cfg.center      = 'yes';
-% cfg.channel = ChanLabels(~ismember(ChanLabels,{'TP9','TP10'}));
-% layout=ft_prepare_layout(cfg);
-% % layout.label(match_str(layout.label,{'TP9','TP10'}))=[];
-% correspCh=[];
-% for nCh=1:length(layout.label)-2
-%     correspCh(nCh)=match_str(ChanLabels,layout.label{nCh});
-% end
-% 
-% figure;
-% subplot(2,2,1);
-% topo_plot=squeeze(nanmean(nanmean(SW_dens_perProbe,2),1));
-% % topo_plot=squeeze(nanmean(SW_dens,1));
-% % topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=0;
-% simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
-% colorbar;
-% title('SW density')
-% 
-% % figure;
-% subplot(2,2,2);
-% topo_plot=squeeze(nanmean(all_P2P,1));
-% topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
-% simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
-% colorbar;
-% title('SW amplitude')
-% 
-% subplot(2,2,3);
-% topo_plot=squeeze(nanmean(all_PosSl,1));
-% topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
-% simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
-% colorbar;
-% title('SW positive slope')
-% 
-% subplot(2,2,4);
-% topo_plot=squeeze(nanmean(all_NegSl,1));
-% topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
-% simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
-% colorbar;
-% title('SW negative slope')
-
