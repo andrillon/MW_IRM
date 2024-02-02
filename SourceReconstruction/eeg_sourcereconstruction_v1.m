@@ -14,6 +14,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 
+% mex -setup -v
+
+
 run ../localdef.m
 
 % adding relevant toolboxes to the path
@@ -105,8 +108,17 @@ save vol.mat vol
 disp(vol)
 
 
+%%
+% Brainstorm pipeline
+cd /Applications/brainstorm3/
+brainstorm
+
+addpath('/Users/kuszti/Applications/SimNIBS-4.0/bin')
 
 
+%setenv('LD_LIBRARY_PATH', sprintf('/Users/kuszti/Applications/SimNIBS-4.0/simnibs_env/lib/python3.9/site-packages/simnibs/external/lib/osx/', getenv('LD_LIBRARY_PATH')))
 
+
+setenv('PATH', [getenv('PATH') '/Users/kuszti/Applications/SimNIBS-4.0/bin']);
 
 
