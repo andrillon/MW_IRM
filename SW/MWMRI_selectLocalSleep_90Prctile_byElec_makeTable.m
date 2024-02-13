@@ -56,40 +56,40 @@ for nF=1:length(files)
     rmpath(genpath(path_eeglab));
     end
     
-    load([save_path filesep 'DSS_allSW_' SubID ])
+%     load([save_path filesep 'DSS_allSW_' SubID ])
     Fs=500;
     
     %%% clean detection
-    paramSW.prticle_Thr=90; % 80 or 90 or 95
-    paramSW.LimFrqW=[1 7]; % [1 4] or [4 10]
-    paramSW.AmpCriterionIdx=4; % 9 (MaxNegpkAmp) or 11 (MaxPosPeakAmp) or 4 (P2P)
-    paramSW.fixThr=[];
-    paramSW.art_ampl=150; %150
-    paramSW.max_posampl=75; %originally 75 as per the NatCom paper
-    paramSW.max_Freq=7;
-    %     paramSW.min_pptionNeg=1;
-    
-    all_Waves=double(all_Waves);
-    all_Waves(EEG.times(all_Waves(:,5))<-window_before_probes*1000 | EEG.times(all_Waves(:,5))>0,:)=[];
-    all_freq=1./(abs((all_Waves(:,5)-all_Waves(:,7)))./Fs);
-    fprintf('... ... %g %% waves discarded because of timing\n',mean(all_Waves(:,7)/Fs>30)*100)
-    fprintf('... ... %g %% waves discarded because of frequency\n',mean(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq)*100)
-    fprintf('... ... %g %% waves discarded because of max P2P ampl\n',mean(all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl)*100)
-    fprintf('... ... %g %% waves discarded because of max pos ampl\n',mean(all_Waves(:,11)>paramSW.max_posampl | all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl)*100)
-    %     fprintf('... ... %g %% waves discarded because of pption neg elect\n',mean(all_Waves(:,16)>paramSW.min_pptionNeg)*100)
-    all_Waves(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
-    %     all_Waves(all_Waves(:,16)>paramSW.min_pptionNeg | all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
-    
-    thr_Wave=[];
-    slow_Waves=[];
-    for nE=1:length(ChanLabels)
-        thisE_Waves=all_Waves(all_Waves(:,3)==nE,:);
-        temp_p2p=thisE_Waves(:,paramSW.AmpCriterionIdx);
-        
-        thr_Wave(nE)=prctile(thisE_Waves(:,paramSW.AmpCriterionIdx),paramSW.prticle_Thr);
-        slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
-    end
-    save([save_path filesep 'prct_DSS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
+%     paramSW.prticle_Thr=90; % 80 or 90 or 95
+%     paramSW.LimFrqW=[1 7]; % [1 4] or [4 10]
+%     paramSW.AmpCriterionIdx=4; % 9 (MaxNegpkAmp) or 11 (MaxPosPeakAmp) or 4 (P2P)
+%     paramSW.fixThr=[];
+%     paramSW.art_ampl=150; %150
+%     paramSW.max_posampl=75; %originally 75 as per the NatCom paper
+%     paramSW.max_Freq=7;
+%     %     paramSW.min_pptionNeg=1;
+%     
+%     all_Waves=double(all_Waves);
+%     all_Waves(EEG.times(all_Waves(:,5))<-window_before_probes*1000 | EEG.times(all_Waves(:,5))>0,:)=[];
+%     all_freq=1./(abs((all_Waves(:,5)-all_Waves(:,7)))./Fs);
+%     fprintf('... ... %g %% waves discarded because of timing\n',mean(all_Waves(:,7)/Fs>30)*100)
+%     fprintf('... ... %g %% waves discarded because of frequency\n',mean(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq)*100)
+%     fprintf('... ... %g %% waves discarded because of max P2P ampl\n',mean(all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl)*100)
+%     fprintf('... ... %g %% waves discarded because of max pos ampl\n',mean(all_Waves(:,11)>paramSW.max_posampl | all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl)*100)
+%     %     fprintf('... ... %g %% waves discarded because of pption neg elect\n',mean(all_Waves(:,16)>paramSW.min_pptionNeg)*100)
+%     all_Waves(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
+%     %     all_Waves(all_Waves(:,16)>paramSW.min_pptionNeg | all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
+%     
+%     thr_Wave=[];
+%     slow_Waves=[];
+%     for nE=1:length(ChanLabels)
+%         thisE_Waves=all_Waves(all_Waves(:,3)==nE,:);
+%         temp_p2p=thisE_Waves(:,paramSW.AmpCriterionIdx);
+%         
+%         thr_Wave(nE)=prctile(thisE_Waves(:,paramSW.AmpCriterionIdx),paramSW.prticle_Thr);
+%         slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
+%     end
+    load([save_path filesep 'prct_DSS_SW_' SubID]);%,'slow_Waves','paramSW','ChanLabels')
     
     for nP=unique(slow_Waves(:,2))'
         slow_Waves_perE=[];
@@ -107,7 +107,7 @@ for nF=1:length(files)
         
         for nE=1:length(ChanLabels)
             slow_Waves_perE=[slow_Waves_perE ; [sum(slow_Waves(:,3)==nE & slow_Waves(:,2)==nP)/duration_of_probe nanmean(slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nP,4)) nanmean(1./((slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nP,7)-slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nP,5))/Fs)) ...
-                nanmean(slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nP,12)) nanmean(slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nP,13)) thr_Wave(nE)]];
+                nanmean(slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nP,12)) nanmean(slow_Waves(slow_Waves(:,3)==nE & slow_Waves(:,2)==nP,13)) NaN]];
         end
         table_length=size(table_SW,1);
         
