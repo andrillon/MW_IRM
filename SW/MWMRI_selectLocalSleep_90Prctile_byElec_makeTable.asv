@@ -25,13 +25,9 @@ States={'ON','MW','MB','DK'};
 %% loop across trials for baseline blocks
 nFc=0;
 all_SW_probes=[];
-<<<<<<< Updated upstream
-window_before_probes=10; % in seconds
-=======
 window_before_probes=20; % in seconds
 load ../Datasetinfo_10-Mar-2023-14-49-21.mat
 
->>>>>>> Stashed changes
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
@@ -165,7 +161,7 @@ for nF=1:length(files)
         
     end
 end
-writetable(table_SW,[save_path filesep 'MW_MRI_SW_Behav_PerProbe.txt']);
+%writetable(table_SW,[save_path filesep 'MW_MRI_SW_Behav_PerProbe.txt']);
 %%
 addpath((path_fieldtrip))
 ft_defaults;
@@ -260,7 +256,7 @@ figure;
 
 subplot(2,3,1)
 simpleTopoPlot_ft(Miss_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(Miss_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+ft_plot_lay_me(layout, 'chanindx', find(Miss_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
 %colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
@@ -268,7 +264,7 @@ title('Misses', 'FontSize', 16)
 
 subplot(2,3,2);
 simpleTopoPlot_ft(FA_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(FA_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+ft_plot_lay_me(layout, 'chanindx', find(FA_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
 %colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
@@ -276,7 +272,7 @@ title('False Alarms', 'FontSize', 16)
 
 subplot(2,3,3);
 simpleTopoPlot_ft(RT_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(RT_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+ft_plot_lay_me(layout, 'chanindx', find(RT_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
 %colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
@@ -284,7 +280,7 @@ title('Reaction Times', 'FontSize', 16)
 
 subplot(2,3,4);
 simpleTopoPlot_ft(VIG_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(VIG_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+ft_plot_lay_me(layout, 'chanindx', find(VIG_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
 %colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
@@ -292,7 +288,7 @@ title('Vigilance', 'FontSize', 16)
 
 subplot(2,3,5);
 simpleTopoPlot_ft(MW_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(MW_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+ft_plot_lay_me(layout, 'chanindx', find(MW_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
 %colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
@@ -300,7 +296,7 @@ title('Mind Wandering', 'FontSize', 16)
 
 subplot(2,3,6);
 simpleTopoPlot_ft(MB_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(MB_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+ft_plot_lay_me(layout, 'chanindx', find(MB_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
 %colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
