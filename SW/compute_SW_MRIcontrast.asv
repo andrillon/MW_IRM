@@ -213,7 +213,7 @@ NOT_Back_SW_event = sortrows(NOT_Back_SW_event,[2,1],'ascend'); % here we sort r
 
 % Save files
 subFolder = ['s' string(SubID)];
-fprintf('Saving SW events subject: %s \n',string(SubID));
+fprintf('Saving SW events subject: %s \n',subFolder);
 
 % Full directory path construction
 fullDirPath = [SWTimingPath, subFolder, filesep];
@@ -232,9 +232,6 @@ variableNames = {'All_Front_SW_event', 'MW_Front_SW_event', 'OT_Front_SW_event',
                  'All_Center_SW_event', 'MW_Center_SW_event', 'OT_Center_SW_event', 'MB_Center_SW_event', 'NOT_Center_SW_event', ...
                  'All_Back_SW_event', 'MW_Back_SW_event', 'OT_Back_SW_event', 'MB_Back_SW_event', 'NOT_Back_SW_event'};
 
-variableNames = cellfun(@(x) ['events_' erase(x, '_event')], variableNames, 'UniformOutput', false);
-
-
 % Loop through each variable and save it
 for idx = 1:length(variables)
     saveDataAsStruct(variables{idx}, variableNames{idx}, fullDirPath);
@@ -248,7 +245,7 @@ function saveDataAsStruct(data, fileName, fullPath)
     % Construct the structure
     events = struct(...
         'label', repmat({'SW'}, size(data, 1), 1),...
-        'color', repmat({[0, 0, 0]}, size(data, 1), 1),...
+        'color', repmat({[1, 1, 1]}, size(data, 1), 1),...
         'epochs', num2cell(data(:,2)),...
         'times', num2cell(data(:,1))...
     );
