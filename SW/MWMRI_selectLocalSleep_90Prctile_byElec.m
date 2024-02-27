@@ -24,7 +24,7 @@ mean_SW_ERP_byElec2=[];
 all_ChanLabels=[];
 nFc=0;
 all_SW_probes=[];
-window_before_probes=10; % in seconds
+window_before_probes=20; % in seconds
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
@@ -170,7 +170,7 @@ for nF=1:length(files)
         if isempty(Dataset(this_row).BadEpochs)
             probes_missing=[];
         else
-            probes_missing=Dataset(this_row).BadEpochs{1};
+            probes_missing= cell2mat(Dataset(this_row).BadEpochs);
         end
     end
     all_probes=1:40;
