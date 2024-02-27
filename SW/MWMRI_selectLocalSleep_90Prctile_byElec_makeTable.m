@@ -11,6 +11,8 @@ run ../localdef.m
 addpath(genpath(lscpTools_path))
 addpath(genpath(exgauss_path))
 addpath(genpath(FMINSEARCHBND_path))
+addpath(path_fieldtrip)
+
 % select relevant files, here baseline blocks
 files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
 
