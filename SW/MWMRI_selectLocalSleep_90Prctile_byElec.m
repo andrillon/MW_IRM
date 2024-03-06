@@ -422,95 +422,95 @@ for nB=1:4
     %     caxis([6.5 9.5])
 end
 
-% mind-state
-figure;
-States={'ON','MW','MB'};
-for nB=1:3
-    subplot(1,3,nB);
-
-   
-% Extract field names for all SubIDs in results
-subIDFields = fieldnames(results);
-temp1=[];
-% Loop through each SubID field
-for nsub = 1:length(subIDFields)
-    subIDField = subIDFields{nsub};
-    if isfield(results.(subIDField), 'SART_State_MB')
-        % Extract SART_State_1 data
-        %inds = results.(subIDField).SART_State_ON; %OT
-        %inds = results.(subIDField).SART_State_MW; %OT
-        inds = results.(subIDField).SART_State_MB; %OT
-
-
-        temp1(:,nsub) = squeeze(nanmean(SW_dens_perProbe(nsub,inds,:),2));
-
-    end
-
-end
-       
-    figure
-    topo_plot=squeeze(nanmean(temp1,2));
-    %     topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
-    simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
-    colorbar;
-    caxis([5 7])
-    title(['Average SW density /min' newline 'Mind-wandering'])
-    %title(['Average SW density /min' newline 'On Task'])
-    %title(['Average SW density /min' newline 'Mind-blanking'])
-
-
-    %     caxis([6.5 9.5])
-end
-
-T = table_SW;
-T.SART_State = categorical(T.SART_State);
-
-%T.SART_State = mergecats(T.SART_State, {'DK'}, 'MB');
-
-% Initialize a structure to store results
-results = struct;
-
-% Get unique combinations of SubID and SART_State
-uniqueSubIDs = unique(T.SubID);
-uniqueSARTStates = unique(T.SART_State);
-
-% Loop through each SubID
-for i = 1:length(uniqueSubIDs)
-    subID = uniqueSubIDs(i);
-    
-    % Find rows for this SubID
-    subIDRows = T.SubID == subID;
-    
-    % Loop through each SART_State for this SubID
-    for j = 1:length(uniqueSARTStates)
-        sartState = uniqueSARTStates(j);
-        
-        % Find rows for this SART_State and SubID
-        stateRows = T.SART_State == sartState & subIDRows;
-        
-        % Extract unique Probe numbers for this combination
-        uniqueProbes = unique(T.Probe(stateRows));
-        
-        % Store results
-        if ~isempty(uniqueProbes)
-            % Use dynamic field names for the structure
-            subIDField = sprintf('SubID_%d', subID);
-            stateField = sprintf('SART_State_%s', sartState);
-            
-            % Check if field exists for SubID
-            if ~isfield(results, subIDField)
-                results.(subIDField) = struct;
-            end
-            
-            % Store unique probes under the correct SubID and SART_State
-            results.(subIDField).(stateField) = uniqueProbes;
-            end
-            end
-            end
-
-
-
-
+% % mind-state
+% figure;
+% States={'ON','MW','MB'};
+% for nB=1:3
+%     subplot(1,3,nB);
+% 
+% 
+% % Extract field names for all SubIDs in results
+% subIDFields = fieldnames(results);
+% temp1=[];
+% % Loop through each SubID field
+% for nsub = 1:length(subIDFields)
+%     subIDField = subIDFields{nsub};
+%     if isfield(results.(subIDField), 'SART_State_MB')
+%         % Extract SART_State_1 data
+%         %inds = results.(subIDField).SART_State_ON; %OT
+%         %inds = results.(subIDField).SART_State_MW; %OT
+%         inds = results.(subIDField).SART_State_MB; %OT
+% 
+% 
+%         temp1(:,nsub) = squeeze(nanmean(SW_dens_perProbe(nsub,inds,:),2));
+% 
+%     end
+% 
+% end
+% 
+%     figure
+%     topo_plot=squeeze(nanmean(temp1,2));
+%     %     topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
+%     simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
+%     colorbar;
+%     caxis([5 7])
+%     title(['Average SW density /min' newline 'Mind-wandering'])
+%     %title(['Average SW density /min' newline 'On Task'])
+%     %title(['Average SW density /min' newline 'Mind-blanking'])
+% 
+% 
+%     %     caxis([6.5 9.5])
+% end
+% 
+% T = table_SW;
+% T.SART_State = categorical(T.SART_State);
+% 
+% %T.SART_State = mergecats(T.SART_State, {'DK'}, 'MB');
+% 
+% % Initialize a structure to store results
+% results = struct;
+% 
+% % Get unique combinations of SubID and SART_State
+% uniqueSubIDs = unique(T.SubID);
+% uniqueSARTStates = unique(T.SART_State);
+% 
+% % Loop through each SubID
+% for i = 1:length(uniqueSubIDs)
+%     subID = uniqueSubIDs(i);
+% 
+%     % Find rows for this SubID
+%     subIDRows = T.SubID == subID;
+% 
+%     % Loop through each SART_State for this SubID
+%     for j = 1:length(uniqueSARTStates)
+%         sartState = uniqueSARTStates(j);
+% 
+%         % Find rows for this SART_State and SubID
+%         stateRows = T.SART_State == sartState & subIDRows;
+% 
+%         % Extract unique Probe numbers for this combination
+%         uniqueProbes = unique(T.Probe(stateRows));
+% 
+%         % Store results
+%         if ~isempty(uniqueProbes)
+%             % Use dynamic field names for the structure
+%             subIDField = sprintf('SubID_%d', subID);
+%             stateField = sprintf('SART_State_%s', sartState);
+% 
+%             % Check if field exists for SubID
+%             if ~isfield(results, subIDField)
+%                 results.(subIDField) = struct;
+%             end
+% 
+%             % Store unique probes under the correct SubID and SART_State
+%             results.(subIDField).(stateField) = uniqueProbes;
+%             end
+%             end
+%             end
+% 
+% 
+% 
+% 
 
             %%
 figure;

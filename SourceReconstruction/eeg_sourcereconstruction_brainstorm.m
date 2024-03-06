@@ -13,11 +13,13 @@
 % Brainstorm:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-clear
-close all
+%clear
+%close all
 data_path='/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/EEG/Preprocessed with BVA';
 MRIpath='/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/anat/';
 reports_dir = '/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/';
+SW_path = '/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/EEG/SW_Events';
+
 
 % create file list as cells
 EEGfileslist = dir([data_path filesep filesep 'MWMRI*clean5.set']);
@@ -41,10 +43,10 @@ end
 Subjects = dir(MRIpath);
 Subjects = Subjects(4:end,:); %remove '.' '..' 'DS_store'
 
-% % Delete existing protocol
-gui_brainstorm('DeleteProtocol', ProtocolName);
-% Create new protocol
-gui_brainstorm('CreateProtocol', ProtocolName, 0, 0);
+% % % Delete existing protocol
+% gui_brainstorm('DeleteProtocol', ProtocolName);
+% % Create new protocol
+% gui_brainstorm('CreateProtocol', ProtocolName, 0, 0);
 
 
 for nF=1:length(Subjects)
@@ -231,7 +233,6 @@ sAvgSrc = bst_process('CallProcess', 'process_inverse_2018', sFilesAVR, [], ...
          'DataTypes',      {{'EEG'}}));
 
 % Save and display report
-% Save and display report
 ReportFile = bst_report('Save', []);
 bst_report('Export', ReportFile, reports_dir);
 bst_report('Open', ReportFile);
@@ -351,5 +352,89 @@ bst_process('CallProcess', 'process_snapshot', sDipFit, [], ...
 % Save and display report
 ReportFile = bst_report('Save', sFiles);
 bst_report('Open', ReportFile);
+
+
+%%
+
+data_path='/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/EEG/Preprocessed with BVA';
+MRIpath='/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/anat/';
+reports_dir = '/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/';
+SW_path = '/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/EEG/SW_Events';
+
+
+% create file list as cells
+EEGfileslist = dir([data_path filesep filesep 'MWMRI*clean5.set']);
+MRIfileslist = dir([MRIpath filesep '*/anat/s*.nii']);
+EEGfiles= fullfile({EEGfileslist.folder}, {EEGfileslist.name})';
+MRIfiles= fullfile({MRIfileslist.folder}, {MRIfileslist.name})';
+SWfileslist = dir([SW_path filesep '*/events_All_Front_SW.mat']);
+SWfiles= fullfile({SWfileslist.folder}, {SWfileslist.name})';
+
+
+% Brainstorm pipeline
+cd /Applications/brainstorm3/
+%brainstorm
+% ===== CREATE PROTOCOL =====
+% The protocol name has to be a valid folder name (no spaces, no weird characters...)
+ProtocolName = 'MWMRI_full';
+% Start brainstorm without the GUI
+if ~brainstorm('status')
+    brainstorm nogui
+end
+
+% select subjects based on folder names
+Subjects = dir(MRIpath);
+Subjects = Subjects(4:end,:); %remove '.' '..' 'DS_store'
+
+% % % Delete existing protocol
+% gui_brainstorm('DeleteProtocol', ProtocolName);
+% % Create new protocol
+% gui_brainstorm('CreateProtocol', ProtocolName, 0, 0);
+
+
+for nF=1:length(Subjects)
+fprintf('... subject: %s\n',Subjects(nF).name)
+
+% Input files
+sFilesAVR = [];
+% Start a new report
+bst_report('Start', sFilesAVR);
+% ===== IMPORT ANATOMY =====
+
+
+% Process: Compute sources [2018]
+bst_process('CallProcess', 'process_inverse_2018', sFilesAVR, [], ...
+    'output',  1, ...  % Kernel only: shared
+    'inverse', struct(...
+         'Comment',        'sLORETA: EEG', ...
+         'InverseMethod',  'minnorm', ...
+         'InverseMeasure', 'sloreta', ...
+         'SourceOrient',   {{'fixed'}}, ...
+         'Loose',          0.2, ...
+         'UseDepth',       0, ...
+         'WeightExp',      0.5, ...
+         'WeightLimit',    10, ...
+         'NoiseMethod',    'reg', ...
+         'NoiseReg',       0.1, ...
+         'SnrMethod',      'fixed', ...
+         'SnrRms',         1e-06, ...
+         'SnrFixed',       3, ...
+         'ComputeKernel',  1, ...
+         'DataTypes',      {{'EEG'}}));
+
+
+
+% Save and display report
+% Save and display report
+ReportFile = bst_report('Save', []);
+bst_report('Export', ReportFile, reports_dir);
+bst_report('Open', ReportFile);
+
+end
+
+%% 
+% Group level
+
+% STEP 1: project sources to default anatomy
 
 

@@ -18,9 +18,13 @@ slow_Waves= saveWaves.slow_Waves;
 
 
 %%
-% Change onset and negative peak time into miliseconds from the probe
-slow_Waves(:,5)=slow_Waves(:,5)-(25*500);
-slow_Waves(:,8)=slow_Waves(:,8)-(25*500);
+% Change onset and end of wave time into seconds from the probe
+Trialtimes = -25000:2:-2;
+slow_Waves(:,5)=Trialtimes(slow_Waves(:,5));
+slow_Waves(:,6)=Trialtimes(slow_Waves(:,6));
+slow_Waves(:,7)=Trialtimes(slow_Waves(:,7));
+slow_Waves(:,8)=Trialtimes(slow_Waves(:,8));
+
 % box_waves=[];
 % for nP=1:40
 %     for nEl=unique(slow_Waves(:,3))'
@@ -152,6 +156,10 @@ SubID=regexp(SubID, '\d+', 'match');
 saveWaves =load([files(nF).folder filesep files(nF).name]);
 slow_Waves= saveWaves.slow_Waves;
 
+% Change onset and end of wave time into seconds from the probe
+Trialtimes = -25000:2:-2;
+slow_Waves(:,5)=Trialtimes(slow_Waves(:,5))/1000;
+slow_Waves(:,8)=Trialtimes(slow_Waves(:,8))/1000;
 
 % load behaviour
 file_behav=dir([data_path filesep '..' filesep '..' filesep 'Behav' filesep 'wanderIM_behavres_s' SubID{:} '*.mat']);
@@ -163,13 +171,13 @@ for nSW=1:length(slow_Waves)
     slow_Waves(nSW,17:21)=probe_res(probe_res(:,end)==thisprobenum,[1,5,17:19,]);
 end 
 
-
-% Change onset and negative peak time into miliseconds from the probe
 tempslow_Waves = slow_Waves(:,[2,3,5,16:21]);
-tempslow_Waves(:,3)=(tempslow_Waves(:,3)-(25*500))/1000; %in sec
-
 
 FrontalElectrodes = find(ismember(saveWaves.ChanLabels,{'F1','Fz', 'F2', 'AF4', 'AF3', 'FPz', 'FP1', 'Fp2'})); %based on group level stats
+% CentralElectrodes = find(ismember(saveWaves.ChanLabels,{'FC1','FC2','CP1', 'CPz', 'CP2', 'P1','Pz','P2',}));
+% BackElectrodes = find(ismember(saveWaves.ChanLabels,{'PO3', 'POz', 'PO4','PO8','PO7', 'Oz', 'O1', 'O2'}));
+
+%FrontalElectrodes = find(ismember(saveWaves.ChanLabels,{'Fz'})); %test 1 chan
 CentralElectrodes = find(ismember(saveWaves.ChanLabels,{'FC1','FC2','CP1', 'CPz', 'CP2', 'P1','Pz','P2',}));
 BackElectrodes = find(ismember(saveWaves.ChanLabels,{'PO3', 'POz', 'PO4','PO8','PO7', 'Oz', 'O1', 'O2'}));
 
