@@ -1,5 +1,11 @@
 function [FTable, CTable, BTable] = SW_TimeRecodingforMR (BlockSW, BlockP, saveWaves) 
 
+% set parameters to extract
+onsetp = 8; % 5=start neg. wave; 8=peak neg wave;6=start pos wave; 10=peak pos wave
+durp = 6; %7=end of wave
+ampp = 9; % 9=neg peak, 11=pos peak, 4=peak2peak
+
+
 % % create a tabel on onsets,durations,amplitudes
 OnsetT = table;
 DurT = table;
@@ -19,9 +25,9 @@ for nP=nPlist % for every probe
         amplitude = [];
         temp_waves=BlockSW(BlockSW(:,end)==nP & BlockSW(:,3)==nEl,:);% take all slow waves
         for nW=1:size(temp_waves,1)
-            onset = [onset; BlockP(BlockP(:,1)==nP,2) + (temp_waves(nW,5)/1000)];%subtract negative onset value from probe onset in seconds
-            duration = [duration; (temp_waves(nW,7)-temp_waves(nW,5))/1000]; % calculate duration in seconds
-            amplitude = [amplitude; abs(temp_waves(nW,4))]; % take absolute amplitude of negative peak
+            onset = [onset; BlockP(BlockP(:,1)==nP,2) + (temp_waves(nW,onsetp)/1000)];%subtract negative onset value from probe onset in seconds
+            duration = [duration; (temp_waves(nW,durp)-temp_waves(nW,onsetp))/1000]; % calculate duration in seconds
+            amplitude = [amplitude; abs(temp_waves(nW,ampp))]; % take absolute amplitude of negative peak
             
         end
         allOnset{nEl}=onset; % for each electrode, we then copy all onset times 
@@ -61,6 +67,10 @@ SWProbeT.Properties.VariableNames={'ProbeNum', 'Q1', 'Q2', 'Q3'};
 % FrontalElectrodes = ismember(saveWaves.ChanLabels,{'Fz'});
 % CentralElectrodes = ismember(saveWaves.ChanLabels,{'Cz'});
 % BackElectrodes = ismember(saveWaves.ChanLabels,{'Pz'});
+
+% FrontalElectrodes = ismember(saveWaves.ChanLabels,{'F1','Fz', 'F2', 'AF4', 'AF3', 'FPz', 'FP1', 'Fp2'}); %based on group level stats
+% CentralElectrodes = ismember(saveWaves.ChanLabels,{'FC1','FC2','CP1', 'CPz', 'CP2', 'P1','Pz','P2',});
+% BackElectrodes = ismember(saveWaves.ChanLabels,{'PO3', 'POz', 'PO4','PO8','PO7', 'Oz', 'O1', 'O2'});
 
 FrontalElectrodes = ismember(saveWaves.ChanLabels,{'F1','Fz', 'F2', 'AF4', 'AF3', 'FPz', 'FP1', 'Fp2'}); %based on group level stats
 CentralElectrodes = ismember(saveWaves.ChanLabels,{'FC1','FC2','CP1', 'CPz', 'CP2', 'P1','Pz','P2',});

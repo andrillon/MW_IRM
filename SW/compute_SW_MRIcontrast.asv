@@ -107,14 +107,7 @@ for nchan=1:max(slow_Waves(:,3))
     [Block3SW] = SW_TimeRecodingforMR_singlechan(Block3sws, BlockP{3},saveWaves, nchan);
     [Block4SW] = SW_TimeRecodingforMR_singlechan(Block4sws, BlockP{4},saveWaves, nchan);
 
-    savefilenameB1 = ['swTimes_', subFolder '_DSWBlock1_', saveWaves.ChanLabels{nchan}, '.csv'];
-    writetable(Block1SW,[[TimingPath subFolder '/Block1'] filesep savefilenameB1]);
-    savefilenameB2 = ['swTimes_', subFolder '_DSWBlock2_', saveWaves.ChanLabels{nchan}, '.csv'];
-    writetable(Block2SW,[[TimingPath subFolder '/Block2'] filesep savefilenameB2]);
-    savefilenameB3 = ['swTimes_', subFolder '_DSWBlock3_', saveWaves.ChanLabels{nchan}, '.csv'];
-    writetable(Block3SW,[[TimingPath subFolder '/Block3'] filesep savefilenameB3]);
-    savefilenameB4 = ['swTimes_', subFolder '_DSWBlock4_', saveWaves.ChanLabels{nchan}, '.csv'];
-    writetable(Block4SW,[[TimingPath subFolder '/Block4'] filesep savefilenameB4]);
+    saveWaves.ChanLabels(nchan)
 end
 
 %%
