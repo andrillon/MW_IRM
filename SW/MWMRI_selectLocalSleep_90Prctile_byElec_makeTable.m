@@ -89,7 +89,7 @@ for nF=1:length(files)
 %         thr_Wave(nE)=prctile(thisE_Waves(:,paramSW.AmpCriterionIdx),paramSW.prticle_Thr);
 %         slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
 %     end
-    load([save_path filesep 'prct_DSS_SW_' SubID]);%,'slow_Waves','paramSW','ChanLabels')
+    load([save_path filesep 'prct_DSS_SW_delta_' SubID]);%,'slow_Waves','paramSW','ChanLabels')
     
     for nP=unique(slow_Waves(:,2))'
         slow_Waves_perE=[];
@@ -140,7 +140,7 @@ for nF=1:length(files)
         
     end
 end
-writetable(table_SW,[save_path filesep 'MW_MRI_SW_Behav_PerProbe.txt']);
+writetable(table_SW,[save_path filesep 'MW_MRI_SW_delta_Behav_PerProbe.txt']);
 %%
 addpath((path_fieldtrip))
 ft_defaults;
@@ -265,21 +265,21 @@ colormap(cmap2);
 caxis([-1 1]*5)
 title('Vigilance', 'FontSize', 16)
 
-subplot(2,3,5);
-simpleTopoPlot_ft(MW_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(MW_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
-%colorbar;
-colormap(cmap2);
-caxis([-1 1]*5)
-title('Mind Wandering', 'FontSize', 16)
+% subplot(2,3,5);
+% simpleTopoPlot_ft(MW_effect(:,1), layout,'on',[],0,1);
+% ft_plot_lay_me(layout, 'chanindx', find(MW_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+% %colorbar;
+% colormap(cmap2);
+% caxis([-1 1]*5)
+% title('Mind Wandering', 'FontSize', 16)
 
-subplot(2,3,6);
-simpleTopoPlot_ft(MB_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(MB_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+subplot(2,3,5);
+simpleTopoPlot_ft(-ON_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ON_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
 %colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('Mind Blanking', 'FontSize', 16)
+title('OFF vs ON', 'FontSize', 16)
 % c = colorbar; c.Label.String = 't-value'; c.Label.FontSize = 14; c.Label.Rotation = 270; c.Label.Position(1) = 2.5; c.Ticks = [-8 8]; c.FontSize = 14;
 
 % %% Topography

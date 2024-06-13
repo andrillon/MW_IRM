@@ -58,7 +58,7 @@ for nF=1:length(files)
     end
 
     Fs=500;
-  load([save_path filesep 'prct_DSS_SW_' SubID])
+  load([save_path filesep 'prct_DSS_SW_delta_' SubID])
 
     table_behav_SW=array2table(zeros(0,10+length(ChanLabels)),'VariableNames',[{'Block','Probe','Trial','Condition','DistToProbe','RT','FA','Miss','MS','Vigilance'},ChanLabels]);
     for nP=unique(slow_Waves(:,2))'
@@ -93,7 +93,7 @@ all_table_behav_SW.Condition=categorical(all_table_behav_SW.Condition);
 all_table_behav_SW.Condition(all_table_behav_SW.Condition=='0')='Go';
 all_table_behav_SW.Condition(all_table_behav_SW.Condition=='1')='NoGo';
 all_table_behav_SW.Condition=removecats(all_table_behav_SW.Condition);
-writetable(all_table_behav_SW,[save_path filesep 'MW_MRI_SW_Behav_PerTrial.txt']);
+writetable(all_table_behav_SW,[save_path filesep 'MW_MRI_SW_delta_Behav_PerTrial.txt']);
 
 %%
 mdl_FA=fitglme(all_table_behav_SW(all_table_behav_SW.Condition=='NoGo',:),'FA~1+Probe+MS+Vigilance+(1|SubID)','Distribution','Binomial');

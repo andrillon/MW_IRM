@@ -15,7 +15,7 @@ addpath(genpath(FMINSEARCHBND_path))
 files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
 
 myERP_Elec={'Fz','Cz','Pz','Oz'};
-myERP_Elec2={{'Fz','Cz'},{'Fz','Pz'},{'Fz','Oz'}};
+myERP_Elec2={'Fz','Cz','Pz','Oz'};
 
 load ../Datasetinfo_10-Mar-2023-14-49-21.mat
 %% loop across trials for baseline blocks
@@ -145,12 +145,12 @@ for nF=1:length(files)
     
     %%% clean detection
     paramSW.prticle_Thr=90; % 80 or 90 or 95
-    paramSW.LimFrqW=[1 7]; % [1 4] or [4 10]
+    paramSW.LimFrqW=[1 4]; % [1 4] or [4 10]
     paramSW.AmpCriterionIdx=4; % 9 (MaxNegpkAmp) or 11 (MaxPosPeakAmp) or 4 (P2P)
     paramSW.fixThr=[];
     paramSW.art_ampl=150; %150
     paramSW.max_posampl=75; %originally 75 as per the NatCom paper
-    paramSW.max_Freq=7;
+    paramSW.max_Freq=4;
 %     paramSW.min_pptionNeg=1;
     
     all_Waves=double(all_Waves);
@@ -198,7 +198,7 @@ for nF=1:length(files)
         slow_Waves(oldBlockNumbers==uniqueBlocksSW(nBl),2)=all_probes(nBl);
     end
     slow_Waves(:,end+1)=oldBlockNumbers;
-    save([save_path filesep 'prct_DSS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
+    save([save_path filesep 'prct_DSS_SW_delta_' SubID],'slow_Waves','paramSW','ChanLabels')
     
     [nout,xout]=hist(slow_Waves(:,3),1:length(ChanLabels));
     all_ChanLabels=[all_ChanLabels ; ChanLabels];
@@ -218,13 +218,13 @@ for nF=1:length(files)
     %%%% check waveform
     
     temp_ERP=cell(2,length(myERP_Elec));
-    temp_ERP2=cell(2,length(myERP_Elec2));
+    temp_ERP2=cell(1,length(myERP_Elec2));
     for nE=1:length(ChanLabels)
         all_P2P(nFc,nE)=nanmean(slow_Waves(slow_Waves(:,3)==nE,4));
         all_NegSl(nFc,nE)=nanmean(slow_Waves(slow_Waves(:,3)==nE,12));
         all_PosSl(nFc,nE)=nanmean(slow_Waves(slow_Waves(:,3)==nE,13));
         
-        temp_SW=slow_Waves(slow_Waves(:,3)==nE,5);
+        temp_SW=slow_Waves(slow_Waves(:,3)==nE,10);
         temp_SW_nProbe=slow_Waves(slow_Waves(:,3)==nE,16);
         time_SW=EEG.times(temp_SW)/1000;
         
@@ -253,23 +253,22 @@ for nF=1:length(files)
                     vec=squeeze(probe_EEG(temp_SW_nProbe(m),nE,(temp_SW(m)-0.5*EEG.srate):(temp_SW(m)+1*EEG.srate)))';
                     vec=vec-mean(vec(1:0.5*EEG.srate));
                     if max(abs(vec))<150
-                        temp_ERP2{1,find(ismember(myERP_Elec2{1},ChanLabels{nE}))}=[temp_ERP2{1,find(ismember(myERP_Elec2{1},ChanLabels{nE}))} ; vec];
+                        temp_ERP2{1}=[temp_ERP2{1} ; vec];
                     end
                 end
             end
-            this_PairE=match_str(ChanLabels,myERP_Elec2{2}(ismember(myERP_Elec2{1},ChanLabels{nE})));
-            temp_SW=slow_Waves(slow_Waves(:,3)==this_PairE,5);
-            temp_SW_nProbe=slow_Waves(slow_Waves(:,3)==this_PairE ,16);
+            for mm=2:length(myERP_Elec2)
+            this_PairE=match_str(ChanLabels,myERP_Elec2{mm});
             for m=1:length(temp_SW)
                 if temp_SW(m)-0.5*EEG.srate>0 && temp_SW(m)+1*EEG.srate<25*EEG.srate
-                    vec=squeeze(probe_EEG(temp_SW_nProbe(m),nE,(temp_SW(m)-0.5*EEG.srate):(temp_SW(m)+1*EEG.srate)))';
+                    vec=squeeze(probe_EEG(temp_SW_nProbe(m),this_PairE,(temp_SW(m)-0.5*EEG.srate):(temp_SW(m)+1*EEG.srate)))';
                     vec=vec-mean(vec(1:0.5*EEG.srate));
                     if max(abs(vec))<150
-                        temp_ERP2{2,find(ismember(myERP_Elec2{1},ChanLabels{nE}))}=[temp_ERP2{2,find(ismember(myERP_Elec2{1},ChanLabels{nE}))} ; vec];
+                        temp_ERP2{mm}=[temp_ERP2{mm} ; vec];
                     end
                 end
             end
-            
+            end
             
         end
     end
@@ -286,16 +285,14 @@ for nF=1:length(files)
     mean_SW_ERP_byElec=cat(4,mean_SW_ERP_byElec,temp_SW_ERP_byElec);
     
     temp_SW_ERP_byElec2=[];
-    for j=1:length(myERP_Elec2{1})
-        for k=1:length(myERP_Elec2{1})
-            if ~isempty(temp_ERP2{k,j})
-                temp_SW_ERP_byElec2(j,k,:)=mean(temp_ERP2{k,j},1);
+    for j=1:length(myERP_Elec2)
+            if ~isempty(temp_ERP2{j})
+                temp_SW_ERP_byElec2(j,:)=mean(temp_ERP2{j},1);
             else
-                temp_SW_ERP_byElec2(j,k,:)=nan(1,751);
+                temp_SW_ERP_byElec2(j,:)=nan(1,751);
             end
-        end
     end
-    mean_SW_ERP_byElec2=cat(4,mean_SW_ERP_byElec2,temp_SW_ERP_byElec2);
+    mean_SW_ERP_byElec2=cat(3,mean_SW_ERP_byElec2,temp_SW_ERP_byElec2);
     
     probe_res(:,1)=probe_res(:,1)+10*(probe_res(:,5)-1);
     all_SW_probes=[all_SW_probes ; str2num(SubID(6:end))*ones(size(probe_res,1)-sum(ismember(probe_res(:,1),probes_missing)),1) probe_res(~ismember(probe_res(:,1),probes_missing),[1 5 17 18 19]) squeeze(nanmean(SW_dens_perProbe(nFc,~ismember(probe_res(:,1),probes_missing),:),3))' squeeze(SW_dens_perProbe(nFc,~ismember(probe_res(:,1),probes_missing),:))];
@@ -431,18 +428,21 @@ end
 
 %%
 figure;
+cmap=cbrewer('seq','OrRd',6);
 set(gcf,'Position',[680   371   560   420]);
 for nCh=1:size(mean_SW_ERP_byElec2,1)
-    subplot(1,2,nCh);
-    temp_plot=squeeze(mean_SW_ERP_byElec2(nCh,1,:,:));
-    temp_plot2=squeeze(mean_SW_ERP_byElec2(nCh,2,:,:));
+%     subplot(1,4,nCh);
+    temp_plot=squeeze(mean_SW_ERP_byElec2(nCh,:,:));
+%     temp_plot2=squeeze(mean_SW_ERP_byElec2(nCh,2,:,:));
     
-    plot(-0.5:1/EEG.srate:1,temp_plot,'Color','k');
-    simpleTplot(-0.5:1/EEG.srate:1,temp_plot',0,[1 0.5 0],0,'-',0.5,1,[],1,4);
-    simpleTplot(-0.5:1/EEG.srate:1,temp_plot2',0,[0.5 0.5 0.5],0,'-',0.5,1,[],1,4);
+%     plot(-0.5:1/EEG.srate:1,temp_plot,'Color','k');
+    [~, hplot(nCh)]=simpleTplot(-0.5:1/EEG.srate:1,temp_plot',0,cmap(nCh+2,:),0,'-',0.5,1,5,1,4);
+%     simpleTplot(-0.5:1/EEG.srate:1,temp_plot2',0,[0.5 0.5 0.5],0,'-',0.5,1,[],1,4);
     format_fig;
     xlabel('Time from onset (s)')
     ylabel('Voltage (\muV)')
-    title(myERP_Elec2{1}{nCh})
+%     title(myERP_Elec2{nCh})
     % ylim([-10 3])
 end
+legend(hplot,myERP_Elec2)
+line([0 0],ylim,'Color','k','LineStyle','--')
