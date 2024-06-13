@@ -14,8 +14,8 @@ addpath(genpath(FMINSEARCHBND_path))
 % select relevant files, here baseline blocks
 files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
 
-myERP_Elec={'Fz','Cz','Pz','Oz'};
-myERP_Elec2={{'Fz','Cz'},{'Fz','Pz'},{'Fz','Oz'}};
+myERP_Elec={'Fz','Cz','Pz','Oz','C5','C6'};
+myERP_Elec2={{'F7','FT9'},{'F8','FT10'}};
 
 load ../Datasetinfo_10-Mar-2023-14-49-21.mat
 %% loop across trials for baseline blocks
@@ -24,7 +24,7 @@ mean_SW_ERP_byElec2=[];
 all_ChanLabels=[];
 nFc=0;
 all_SW_probes=[];
-window_before_probes=10; % in seconds
+window_before_probes=20; % in seconds
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
@@ -51,7 +51,7 @@ for nF=1:length(files)
     % load EEG
     addpath(genpath(path_eeglab));
     EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
-%    EEG = pop_rmbase( EEG, [-25000 0] ,[]);
+    %EEG = pop_rmbase( EEG, [-25000 0] ,[]);
 %     EEG2 = pop_epoch( EEG, {  'R'  }, [-0.5         1.5], 'epochinfo', 'yes');
 
 
@@ -170,7 +170,7 @@ for nF=1:length(files)
         if isempty(Dataset(this_row).BadEpochs)
             probes_missing=[];
         else
-            probes_missing=Dataset(this_row).BadEpochs{1};
+            probes_missing= cell2mat(Dataset(this_row).BadEpochs);
         end
     end
     all_probes=1:40;
@@ -287,7 +287,7 @@ for nF=1:length(files)
     
     temp_SW_ERP_byElec2=[];
     for j=1:length(myERP_Elec2{1})
-        for k=1:length(myERP_Elec2{1})
+        for k=1:2
             if ~isempty(temp_ERP2{k,j})
                 temp_SW_ERP_byElec2(j,k,:)=mean(temp_ERP2{k,j},1);
             else
@@ -422,12 +422,109 @@ for nB=1:4
     %     caxis([6.5 9.5])
 end
 
-%%
+% % mind-state
 % figure;
-% topo_plot=mean(SW_dens(1:end-1,:),1); %squeeze(mean(mean(SW_dens_perProbe,2),1));
-% simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
-% colorbar;
-% title('SW density')
+% States={'ON','MW','MB'};
+% for nB=1:3
+%     subplot(1,3,nB);
+% 
+% 
+% % Extract field names for all SubIDs in results
+% subIDFields = fieldnames(results);
+% temp1=[];
+% % Loop through each SubID field
+% for nsub = 1:length(subIDFields)
+%     subIDField = subIDFields{nsub};
+%     if isfield(results.(subIDField), 'SART_State_MB')
+%         % Extract SART_State_1 data
+%         %inds = results.(subIDField).SART_State_ON; %OT
+%         %inds = results.(subIDField).SART_State_MW; %OT
+%         inds = results.(subIDField).SART_State_MB; %OT
+% 
+% 
+%         temp1(:,nsub) = squeeze(nanmean(SW_dens_perProbe(nsub,inds,:),2));
+% 
+%     end
+% 
+% end
+% 
+%     figure
+%     topo_plot=squeeze(nanmean(temp1,2));
+%     %     topo_plot(match_str(ChanLabels,{'TP9','TP10'}))=NaN;
+%     simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
+%     colorbar;
+%     caxis([5 7])
+%     title(['Average SW density /min' newline 'Mind-wandering'])
+%     %title(['Average SW density /min' newline 'On Task'])
+%     %title(['Average SW density /min' newline 'Mind-blanking'])
+% 
+% 
+%     %     caxis([6.5 9.5])
+% end
+% 
+% T = table_SW;
+% T.SART_State = categorical(T.SART_State);
+% 
+% %T.SART_State = mergecats(T.SART_State, {'DK'}, 'MB');
+% 
+% % Initialize a structure to store results
+% results = struct;
+% 
+% % Get unique combinations of SubID and SART_State
+% uniqueSubIDs = unique(T.SubID);
+% uniqueSARTStates = unique(T.SART_State);
+% 
+% % Loop through each SubID
+% for i = 1:length(uniqueSubIDs)
+%     subID = uniqueSubIDs(i);
+% 
+%     % Find rows for this SubID
+%     subIDRows = T.SubID == subID;
+% 
+%     % Loop through each SART_State for this SubID
+%     for j = 1:length(uniqueSARTStates)
+%         sartState = uniqueSARTStates(j);
+% 
+%         % Find rows for this SART_State and SubID
+%         stateRows = T.SART_State == sartState & subIDRows;
+% 
+%         % Extract unique Probe numbers for this combination
+%         uniqueProbes = unique(T.Probe(stateRows));
+% 
+%         % Store results
+%         if ~isempty(uniqueProbes)
+%             % Use dynamic field names for the structure
+%             subIDField = sprintf('SubID_%d', subID);
+%             stateField = sprintf('SART_State_%s', sartState);
+% 
+%             % Check if field exists for SubID
+%             if ~isfield(results, subIDField)
+%                 results.(subIDField) = struct;
+%             end
+% 
+%             % Store unique probes under the correct SubID and SART_State
+%             results.(subIDField).(stateField) = uniqueProbes;
+%             end
+%             end
+%             end
+% 
+% 
+% 
+% 
+
+            %%
+figure;
+topo_plot=mean(SW_dens(1:end-1,:),1); %squeeze(mean(mean(SW_dens_perProbe,2),1));
+simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
+colorbar;
+title('SW density')
+
+figure;
+topo_plot=squeeze(mean(nanmean(SW_dens_perProbe,2),1));
+simpleTopoPlot_ft(topo_plot(correspCh), layout,'labels',[],0,1);
+colorbar;
+title('SW density')
+
 
 %%
 figure;

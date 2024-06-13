@@ -20,8 +20,8 @@ for nP=nPlist % for every probe
         temp_waves=BlockSW(BlockSW(:,end)==nP & BlockSW(:,3)==nEl,:);% take all slow waves
         for nW=1:size(temp_waves,1)
             onset = [onset; BlockP(BlockP(:,1)==nP,2) + (temp_waves(nW,5)/1000)];%subtract negative onset value from probe onset in seconds
-            duration = [duration; (temp_waves(nW,8)-temp_waves(nW,5))/1000]; % calculate duration in seconds
-            amplitude = [amplitude; abs(temp_waves(nW,9))]; % take absolute amplitude of negative peak
+            duration = [duration; (temp_waves(nW,7)-temp_waves(nW,5))/1000]; % calculate duration in seconds
+            amplitude = [amplitude; abs(temp_waves(nW,4))]; % take absolute amplitude of negative peak
             
         end
         allOnset{nEl}=onset; % for each electrode, we then copy all onset times 
@@ -50,7 +50,7 @@ end
 OnsetT.Properties.VariableNames=saveWaves.ChanLabels;
 DurT.Properties.VariableNames=saveWaves.ChanLabels;
 AmpT.Properties.VariableNames=saveWaves.ChanLabels;
-%SWProbeT.Properties.VariableNames={'ProbeNum', 'Q1', 'Q2', 'Q3'};
+SWProbeT.Properties.VariableNames={'ProbeNum', 'Q1', 'Q2', 'Q3'};
 
 
 % % select subset of electrodes
@@ -66,7 +66,8 @@ FrontalElectrodes = ismember(saveWaves.ChanLabels,{'F1','Fz', 'F2', 'AF4', 'AF3'
 CentralElectrodes = ismember(saveWaves.ChanLabels,{'FC1','FC2','CP1', 'CPz', 'CP2', 'P1','Pz','P2',});
 BackElectrodes = ismember(saveWaves.ChanLabels,{'PO3', 'POz', 'PO4','PO8','PO7', 'Oz', 'O1', 'O2'});
 
-% we need to get timecourse 
+% VERSION A: inlcude all waves
+% % we need to get timecourse 
 vOnset_F = reshape(table2array(OnsetT(:,FrontalElectrodes)), 1, [])';
 vOnset_F(isnan(vOnset_F))=[];
 vDur_F = reshape(table2array(DurT(:,FrontalElectrodes)), 1, [])';
