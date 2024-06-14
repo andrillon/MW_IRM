@@ -23,6 +23,11 @@ slow_Waves(:,7)=Trialtimes(slow_Waves(:,7));
 slow_Waves(:,8)=Trialtimes(slow_Waves(:,8));
 slow_Waves(:,10)=Trialtimes(slow_Waves(:,10));
 
+
+% Select Slow waves based on time-window
+window_before_probes=10; % in seconds
+slow_Waves(slow_Waves(:,5)<-window_before_probes*1000,:)=[];
+
 % box_waves=[];
 % for nP=1:40
 %     for nEl=unique(slow_Waves(:,3))'
