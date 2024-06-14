@@ -284,6 +284,17 @@ caxis([-1 1]*5)
 title('Mind Blanking', 'FontSize', 16)
 % c = colorbar; c.Label.String = 't-value'; c.Label.FontSize = 14; c.Label.Rotation = 270; c.Label.Position(1) = 2.5; c.Ticks = [-8 8]; c.FontSize = 14;
 
+figure;
+simpleTopoPlot_ft(ON_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ON_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+%colorbar;
+colormap(cmap2);
+caxis([-1 1]*5)
+title('OFF vs ON', 'FontSize', 16)
+c = colorbar; c.Label.String = 't-value'; c.Label.FontSize = 14; c.Label.Rotation = 270; c.Label.Position(1) = 4; c.FontSize = 14;
+
+
+
 % %% Topography
 % % ChanLabels={EEG.chanlocs.labels};
 % ChanLabels(find(ismember(ChanLabels,'FPz')))={'Fpz'};
