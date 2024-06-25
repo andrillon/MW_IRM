@@ -170,64 +170,40 @@ end
 % Correlation with behaviour
 clear *_effect
 newlabels=layout.label(1:end-2);
-for nCh=1:length(newlabels)
-    
-    mdl_FA=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_FA~1+Block+SW_density+(1+Block|SubID)');
-    FA_effect(nCh,1)=mdl_FA.Coefficients.tStat(match_str(mdl_FA.CoefficientNames,'SW_density'));
-    FA_effect(nCh,2)=mdl_FA.Coefficients.pValue(match_str(mdl_FA.CoefficientNames,'SW_density'));
-    
-    mdl_Miss=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Miss~1+Block+SW_density+(1+Block|SubID)');
-    Miss_effect(nCh,1)=mdl_Miss.Coefficients.tStat(match_str(mdl_Miss.CoefficientNames,'SW_density'));
-    Miss_effect(nCh,2)=mdl_Miss.Coefficients.pValue(match_str(mdl_Miss.CoefficientNames,'SW_density'));
-    
-    mdl_RT=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_HitRT~1+Block+SW_density+(1+Block|SubID)');
-    RT_effect(nCh,1)=mdl_RT.Coefficients.tStat(match_str(mdl_RT.CoefficientNames,'SW_density'));
-    RT_effect(nCh,2)=mdl_RT.Coefficients.pValue(match_str(mdl_RT.CoefficientNames,'SW_density'));
-    
-end
 
-
-
-% Correlation with Mindstate
-
-%table2_SW.SART_MB2=table2_SW.SART_MB+table2_SW.SART_DK;
-% table_SW.SART_MW(table_SW.SART_MW~=1 & table_SW.SART_ON~=1)=NaN;
-% table_SW.SART_MB(table_SW.SART_MB~=1 & table_SW.SART_ON~=1)=NaN;
+% Correlation with Mindstate - ON vs OFF task 
 table_SW.SART_ON=nan(size(table_SW,1),1);
 table_SW.SART_ON(table_SW.SART_State=='ON')=1;
 table_SW.SART_ON(table_SW.SART_State~='ON')=0;
 
-table_SW.SART_MW=nan(size(table_SW,1),1);
-table_SW.SART_MW(table_SW.SART_State=='MW')=1;
-table_SW.SART_MW(table_SW.SART_State=='ON')=0;
-
-table_SW.SART_MB=nan(size(table_SW,1),1);
-table_SW.SART_MB(table_SW.SART_State=='MB' | table_SW.SART_State=='DK')=1;
-table_SW.SART_MB(table_SW.SART_State=='ON')=0;
 
 for nCh=1:length(newlabels)
-    mdl_MW=fitglme(table_SW(table_SW.Elec==newlabels{nCh} & isnan(table_SW.SART_MW)==0,:),'SART_MW~1+Block+SW_density+(1+Block|SubID)','Distribution','binomial');
-    MW_effect(nCh,1)=mdl_MW.Coefficients.tStat(match_str(mdl_MW.CoefficientNames,'SW_density'));
-    MW_effect(nCh,2)=mdl_MW.Coefficients.pValue(match_str(mdl_MW.CoefficientNames,'SW_density'));
-    
-    mdl_MB=fitglme(table_SW(table_SW.Elec==newlabels{nCh} & isnan(table_SW.SART_MB)==0,:),'SART_MB~1+Block+SW_density+(1+Block|SubID)','Distribution','binomial');
-    MB_effect(nCh,1)=mdl_MB.Coefficients.tStat(match_str(mdl_MB.CoefficientNames,'SW_density'));
-    MB_effect(nCh,2)=mdl_MB.Coefficients.pValue(match_str(mdl_MB.CoefficientNames,'SW_density'));
-    
-    mdl_ON=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_density+(1+Block|SubID)','Distribution','binomial');
-    ON_effect(nCh,1)=mdl_ON.Coefficients.tStat(match_str(mdl_ON.CoefficientNames,'SW_density'));
-    ON_effect(nCh,2)=mdl_ON.Coefficients.pValue(match_str(mdl_ON.CoefficientNames,'SW_density'));
-    
-    mdl_VIG=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Vig~1+Block+SW_density+(1+Block|SubID)');
-    VIG_effect(nCh,1)=mdl_VIG.Coefficients.tStat(match_str(mdl_VIG.CoefficientNames,'SW_density'));
-    VIG_effect(nCh,2)=mdl_VIG.Coefficients.pValue(match_str(mdl_VIG.CoefficientNames,'SW_density'));
+    mdl_ON_D=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_density+(1+Block|SubID)','Distribution','binomial');
+    ON_D_effect(nCh,1)=mdl_ON_D.Coefficients.tStat(match_str(mdl_ON_D.CoefficientNames,'SW_density'));
+    ON_D_effect(nCh,2)=mdl_ON_D.Coefficients.pValue(match_str(mdl_ON_D.CoefficientNames,'SW_density'));
 
+    mdl_ON_A=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_amplitude+(1+Block|SubID)','Distribution','binomial');
+    ON_A_effect(nCh,1)=mdl_ON_A.Coefficients.tStat(match_str(mdl_ON_A.CoefficientNames,'SW_amplitude'));
+    ON_A_effect(nCh,2)=mdl_ON_A.Coefficients.pValue(match_str(mdl_ON_A.CoefficientNames,'SW_amplitude'));
+
+    mdl_ON_F=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_frequency+(1+Block|SubID)','Distribution','binomial');
+    ON_F_effect(nCh,1)=mdl_ON_F.Coefficients.tStat(match_str(mdl_ON_F.CoefficientNames,'SW_frequency'));
+    ON_F_effect(nCh,2)=mdl_ON_F.Coefficients.pValue(match_str(mdl_ON_F.CoefficientNames,'SW_frequency'));
+
+    mdl_ON_Do=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_downslope+(1+Block|SubID)','Distribution','binomial');
+    ON_Do_effect(nCh,1)=mdl_ON_Do.Coefficients.tStat(match_str(mdl_ON_Do.CoefficientNames,'SW_downslope'));
+    ON_Do_effect(nCh,2)=mdl_ON_Do.Coefficients.pValue(match_str(mdl_ON_Do.CoefficientNames,'SW_downslope'));
+
+    mdl_ON_U=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_upslope+(1+Block|SubID)','Distribution','binomial');
+    ON_U_effect(nCh,1)=mdl_ON_U.Coefficients.tStat(match_str(mdl_ON_U.CoefficientNames,'SW_upslope'));
+    ON_U_effect(nCh,2)=mdl_ON_U.Coefficients.pValue(match_str(mdl_ON_U.CoefficientNames,'SW_upslope'));
 end
+
 
 %% Figure
 
-effect = [Miss_effect(:,1), FA_effect(:,1), RT_effect(:,1), MB_effect(:,1), MW_effect(:,1), VIG_effect(:,1)];
-all_pV = [Miss_effect(:,2); FA_effect(:,2); RT_effect(:,2); MB_effect(:,2); MW_effect(:,2); VIG_effect(:,2)];
+effect = [ON_D_effect(:,1), ON_A_effect(:,1), ON_F_effect(:,1), ON_Do_effect(:,1), ON_U_effect(:,1)];
+all_pV = [ON_D_effect(:,2); ON_A_effect(:,2); ON_F_effect(:,2); ON_Do_effect(:,2); ON_U_effect(:,2)];
 FDR_Thr=0.05; %fdr(all_pV,0.05);
 cmap2=cbrewer('div','RdBu',64); cmap2=flipud(cmap2);
 minmax = ceil(max(max(abs(effect))));
@@ -236,62 +212,55 @@ minmax = ceil(max(max(abs(effect))));
 figure;
 
 subplot(2,3,1)
-simpleTopoPlot_ft(Miss_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(Miss_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
-%colorbar;
+simpleTopoPlot_ft(ON_D_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ON_D_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('Misses', 'FontSize', 16)
+title('OFF vs ON Density', 'FontSize', 16)
 
 subplot(2,3,2);
-simpleTopoPlot_ft(FA_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(FA_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
-%colorbar;
+simpleTopoPlot_ft(ON_A_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ON_A_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('False Alarms', 'FontSize', 16)
+title('OFF vs ON Amplitude', 'FontSize', 16)
 
 subplot(2,3,3);
-simpleTopoPlot_ft(RT_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(RT_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
-%colorbar;
+simpleTopoPlot_ft(ON_F_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ON_F_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('Reaction Times', 'FontSize', 16)
+title('OFF vs ON Freq', 'FontSize', 16)
 
 subplot(2,3,4);
-simpleTopoPlot_ft(VIG_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(VIG_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
-%colorbar;
+simpleTopoPlot_ft(ON_Do_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ON_Do_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('Vigilance', 'FontSize', 16)
+title('OFF vs ON Downslope', 'FontSize', 16)
 
-subplot(2,4,5);
-simpleTopoPlot_ft(MW_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(MW_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
-%colorbar;
+subplot(2,3,5);
+simpleTopoPlot_ft(ON_U_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ON_U_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('Mind Wandering', 'FontSize', 16)
+title('OFF vs ON Upslope', 'FontSize', 16)
 
-subplot(2,4,6);
-simpleTopoPlot_ft(MB_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(MB_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
-%colorbar;
-colormap(cmap2);
-caxis([-1 1]*5)
-title('Mind Blanking', 'FontSize', 16)
-% c = colorbar; c.Label.String = 't-value'; c.Label.FontSize = 14; c.Label.Rotation = 270; c.Label.Position(1) = 2.5; c.Ticks = [-8 8]; c.FontSize = 14;
 
-subplot(2,4,7);
-simpleTopoPlot_ft(ON_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(ON_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
-%colorbar;
-colormap(cmap2);
-caxis([-1 1]*5)
-title('OFF vs ON', 'FontSize', 16)
-
+% figure;
+% simpleTopoPlot_ft(ON_effect(:,1), layout,'on',[],0,1);
+% ft_plot_lay_me(layout, 'chanindx', find(ON_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+% colorbar;
+% colormap(cmap2);
+% caxis([-1 1]*5)
+% title('OFF vs ON', 'FontSize', 16)
+% c = colorbar; c.Label.String = 't-value'; c.Label.FontSize = 14; c.Label.Rotation = 270; c.Label.Position(1) = 4; c.FontSize = 14;
+% 
 
 
 % %% Topography

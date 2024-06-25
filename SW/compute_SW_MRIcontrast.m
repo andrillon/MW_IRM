@@ -6,7 +6,7 @@
 cd /Users/kuszti/Documents/Git/MW_IRM/SW/
 run ../localdef.m
 
-files=dir([save_path filesep 'prct_DSS_SW_*']);
+files=dir([save_path filesep 'prct_DSS_SW_M*']);
 
 for nF=1:length(files)
 
@@ -25,7 +25,7 @@ slow_Waves(:,10)=Trialtimes(slow_Waves(:,10));
 
 
 % Select Slow waves based on time-window
-window_before_probes=10; % in seconds
+window_before_probes=20; % in seconds
 slow_Waves(slow_Waves(:,5)<-window_before_probes*1000,:)=[];
 
 % box_waves=[];
@@ -55,15 +55,13 @@ fprintf('Running subject: %s \n',subFolder);
 
 
 BlockDatasetP = dir([TimingPath subFolder '/*/*ProbeBlock*.csv']); 
-BlockDataset = dir([TimingPath subFolder '/*/*_Block*.csv']); 
+BlockDataset = dir([TimingPath subFolder '/*/b*_Block*.csv']); 
 Block = [];
 BlockP = [];
 for nbl = 1:size(BlockDataset,1)
     Block{nbl} = readmatrix([BlockDataset(nbl).folder filesep BlockDataset(nbl).name]);
     BlockP{nbl} = readmatrix([BlockDatasetP(nbl).folder filesep BlockDatasetP(nbl).name]);
 end
-
-
 
 %%
 % convert into onset vector, duration vector, and parameric modulation
@@ -100,64 +98,66 @@ Block2sws(:,end+1)=Block2sws(:,2)-10;
 Block3sws(:,end+1)=Block3sws(:,2)-20;
 Block4sws(:,end+1)=Block4sws(:,2)-30;
 
-% this function 
-% [Block1SWF, Block1SWC, Block1SWB] = SW_TimeRecodingforMR (Block1sws, BlockP{1},saveWaves);
-% [Block2SWF, Block2SWC, Block2SWB] = SW_TimeRecodingforMR (Block2sws, BlockP{2},saveWaves);
-% [Block3SWF, Block3SWC, Block3SWB] = SW_TimeRecodingforMR (Block3sws, BlockP{3},saveWaves);
-% [Block4SWF, Block4SWC, Block4SWB] = SW_TimeRecodingforMR (Block4sws, BlockP{4},saveWaves);
+[Block1SWF, Block1SWC, Block1SWB] = SW_TimeRecodingforMR (Block1sws, BlockP{1},saveWaves);
+[Block2SWF, Block2SWC, Block2SWB] = SW_TimeRecodingforMR (Block2sws, BlockP{2},saveWaves);
+[Block3SWF, Block3SWC, Block3SWB] = SW_TimeRecodingforMR (Block3sws, BlockP{3},saveWaves);
+[Block4SWF, Block4SWC, Block4SWB] = SW_TimeRecodingforMR (Block4sws, BlockP{4},saveWaves);
 
-for nchan=1:max(slow_Waves(:,3))
-    [Block1SW] = SW_TimeRecodingforMR_singlechan(Block1sws, BlockP{1},saveWaves, nchan);
-    [Block2SW] = SW_TimeRecodingforMR_singlechan(Block2sws, BlockP{2},saveWaves, nchan);
-    [Block3SW] = SW_TimeRecodingforMR_singlechan(Block3sws, BlockP{3},saveWaves, nchan);
-    [Block4SW] = SW_TimeRecodingforMR_singlechan(Block4sws, BlockP{4},saveWaves, nchan);
-
-    savefilenameB1 = ['swTimes_', subFolder '_DSWBlock1_', saveWaves.ChanLabels{nchan}, '.csv'];
-    writetable(Block1SW,[[TimingPath subFolder '/Block1'] filesep savefilenameB1]);
-    savefilenameB2 = ['swTimes_', subFolder '_DSWBlock2_', saveWaves.ChanLabels{nchan}, '.csv'];
-    writetable(Block2SW,[[TimingPath subFolder '/Block2'] filesep savefilenameB2]);
-    savefilenameB3 = ['swTimes_', subFolder '_DSWBlock3_', saveWaves.ChanLabels{nchan}, '.csv'];
-    writetable(Block3SW,[[TimingPath subFolder '/Block3'] filesep savefilenameB3]);
-    savefilenameB4 = ['swTimes_', subFolder '_DSWBlock4_', saveWaves.ChanLabels{nchan}, '.csv'];
-    writetable(Block4SW,[[TimingPath subFolder '/Block4'] filesep savefilenameB4]);
-end
+% for nchan=1:max(slow_Waves(:,3))
+%     [Block1SW] = SW_TimeRecodingforMR_singlechan(Block1sws, BlockP{1},saveWaves, nchan);
+%     [Block2SW] = SW_TimeRecodingforMR_singlechan(Block2sws, BlockP{2},saveWaves, nchan);
+%     [Block3SW] = SW_TimeRecodingforMR_singlechan(Block3sws, BlockP{3},saveWaves, nchan);
+%     [Block4SW] = SW_TimeRecodingforMR_singlechan(Block4sws, BlockP{4},saveWaves, nchan);
+% 
+%     savefilenameB1 = ['swTimes_', subFolder '_DSWBlock1_', saveWaves.ChanLabels{nchan}, '.csv'];
+%     writetable(Block1SW,[[TimingPath subFolder '/Block1'] filesep savefilenameB1]);
+%     savefilenameB2 = ['swTimes_', subFolder '_DSWBlock2_', saveWaves.ChanLabels{nchan}, '.csv'];
+%     writetable(Block2SW,[[TimingPath subFolder '/Block2'] filesep savefilenameB2]);
+%     savefilenameB3 = ['swTimes_', subFolder '_DSWBlock3_', saveWaves.ChanLabels{nchan}, '.csv'];
+%     writetable(Block3SW,[[TimingPath subFolder '/Block3'] filesep savefilenameB3]);
+%     savefilenameB4 = ['swTimes_', subFolder '_DSWBlock4_', saveWaves.ChanLabels{nchan}, '.csv'];
+%     writetable(Block4SW,[[TimingPath subFolder '/Block4'] filesep savefilenameB4]);
+% end
 
 %%
 % SAVE
 
-% % BLOCK 1
-% savefilenameB1SF = ['swTimes_', subFolder '_USWBlock1F.csv'];
-% writetable(Block1SWF,[[TimingPath subFolder '/Block1'] filesep savefilenameB1SF]);
-% savefilenameB1SC = ['swTimes_', subFolder '_USWBlock1B.csv'];
-% writetable(Block1SWC,[[TimingPath subFolder '/Block1'] filesep savefilenameB1SC]);
-% savefilenameB1SB = ['swTimes_', subFolder '_USWBlock1C.csv'];
-% writetable(Block1SWB,[[TimingPath subFolder '/Block1'] filesep savefilenameB1SB]);
-% 
-% % BLOCK 2
-% savefilenameB2SF = ['swTimes_', subFolder '_USWBlock2F.csv'];
-% writetable(Block2SWF,[[TimingPath subFolder '/Block2'] filesep savefilenameB2SF]);
-% savefilenameB2SC = ['swTimes_', subFolder '_USWBlock2B.csv'];
-% writetable(Block2SWC,[[TimingPath subFolder '/Block2'] filesep savefilenameB2SC]);
-% savefilenameB2SB = ['swTimes_', subFolder '_USWBlock2C.csv'];
-% writetable(Block2SWB,[[TimingPath subFolder '/Block2'] filesep savefilenameB2SB]);
-% 
-% 
-% % BLOCK 3
-% savefilenameB3SF = ['swTimes_', subFolder '_USWBlock3F.csv'];
-% writetable(Block3SWF,[[TimingPath subFolder '/Block3'] filesep savefilenameB3SF]);
-% savefilenameB3SC = ['swTimes_', subFolder '_USWBlock3B.csv'];
-% writetable(Block3SWC,[[TimingPath subFolder '/Block3'] filesep savefilenameB3SC]);
-% savefilenameB3SB = ['swTimes_', subFolder '_USWBlock3C.csv'];
-% writetable(Block3SWB,[[TimingPath subFolder '/Block3'] filesep savefilenameB3SB]);
-% 
-%     % BLOCK 4
-% savefilenameB4SF = ['swTimes_', subFolder '_USWBlock4F.csv'];
-% writetable(Block4SWF,[[TimingPath subFolder '/Block4'] filesep savefilenameB4SF]);
-% savefilenameB4SC = ['swTimes_', subFolder '_USWBlock4B.csv'];
-% writetable(Block4SWC,[[TimingPath subFolder '/Block4'] filesep savefilenameB4SC]);
-% savefilenameB4SB = ['swTimes_', subFolder '_USWBlock4C.csv'];
-% writetable(Block4SWB,[[TimingPath subFolder '/Block4'] filesep savefilenameB4SB]);
-end
+% BLOCK 1 
+savefilenameB1SF = ['swTimes_', subFolder '_Block1_Fz.csv'];
+writetable(Block1SWF,[[TimingPath subFolder '/Block1'] filesep savefilenameB1SF]);
+savefilenameB1SC = ['swTimes_', subFolder '_Block1_Cz.csv'];
+writetable(Block1SWC,[[TimingPath subFolder '/Block1'] filesep savefilenameB1SC]);
+savefilenameB1SB = ['swTimes_', subFolder '_Block1_Pz.csv'];
+writetable(Block1SWB,[[TimingPath subFolder '/Block1'] filesep savefilenameB1SB]);
+
+% BLOCK 2
+savefilenameB2SF = ['swTimes_', subFolder '_Block2_Fz.csv'];
+writetable(Block2SWF,[[TimingPath subFolder '/Block2'] filesep savefilenameB2SF]);
+savefilenameB2SC = ['swTimes_', subFolder '_Block2_Cz.csv'];
+writetable(Block2SWC,[[TimingPath subFolder '/Block2'] filesep savefilenameB2SC]);
+savefilenameB2SB = ['swTimes_', subFolder '_Block2_Pz.csv'];
+writetable(Block2SWB,[[TimingPath subFolder '/Block2'] filesep savefilenameB2SB]);
+
+
+% BLOCK 3
+savefilenameB3SF = ['swTimes_', subFolder '_Block3_Fz.csv'];
+writetable(Block3SWF,[[TimingPath subFolder '/Block3'] filesep savefilenameB3SF]);
+savefilenameB3SC = ['swTimes_', subFolder '_Block3_Cz.csv'];
+writetable(Block3SWC,[[TimingPath subFolder '/Block3'] filesep savefilenameB3SC]);
+savefilenameB3SB = ['swTimes_', subFolder '_Block3_Pz.csv'];
+writetable(Block3SWB,[[TimingPath subFolder '/Block3'] filesep savefilenameB3SB]);
+
+    % BLOCK 4
+savefilenameB4SF = ['swTimes_', subFolder '_Block4_Fz.csv'];
+writetable(Block4SWF,[[TimingPath subFolder '/Block4'] filesep savefilenameB4SF]);
+savefilenameB4SC = ['swTimes_', subFolder '_Block4_Cz.csv'];
+writetable(Block4SWC,[[TimingPath subFolder '/Block4'] filesep savefilenameB4SC]);
+savefilenameB4SB = ['swTimes_', subFolder '_Block4_Pz.csv'];
+writetable(Block4SWB,[[TimingPath subFolder '/Block4'] filesep savefilenameB4SB]);
+
+
+
+%end
 
 
 
@@ -285,3 +285,94 @@ end
 % end
 % 
 % 
+
+% 
+% % Combine all blocks into cell arrays
+% blocks_F = {Block1SWF, Block2SWF, Block3SWF, Block4SWF};
+% blocks_C = {Block1SWC, Block2SWC, Block3SWC, Block4SWC};
+% blocks_B = {Block1SWB, Block2SWB, Block3SWB, Block4SWB};
+% 
+% % Initialize vectors for the plot
+% x_F = [];
+% y_F = [];
+% x_C = [];
+% y_C = [];
+% x_B = [];
+% y_B = [];
+% 
+% currentOffset = 0;
+% breakDuration = 00;
+% % Construct plot data for blocks_F
+% for b = 1:length(blocks_F)
+%     block = blocks_F{b};
+%     onsets = block.Onset;
+%     durations = block.Duration;
+%     amplitudes = block.Amplitude;
+%     
+%     for i = 1:height(block)
+%         x_F = [x_F, currentOffset + onsets(i), currentOffset + onsets(i), currentOffset + onsets(i) + durations(i), currentOffset + onsets(i) + durations(i)];
+%         y_F = [y_F, 0, amplitudes(i), amplitudes(i), 0];
+%     end
+%     
+%     currentOffset = currentOffset + max(onsets + durations) + breakDuration;
+% 
+% end
+% x_F = [0, x_F, max(x_F)];
+% y_F = [0, y_F, 0];
+% 
+% % Reset offset for the next blocks
+% currentOffset = 0;
+% 
+% % Construct plot data for blocks_C
+% for b = 1:length(blocks_C)
+%     block = blocks_C{b};
+%     onsets = block.Onset;
+%     durations = block.Duration;
+%     amplitudes = block.Amplitude;
+%     
+%     for i = 1:height(block)
+%         x_C = [x_C, currentOffset + onsets(i), currentOffset + onsets(i), currentOffset + onsets(i) + durations(i), currentOffset + onsets(i) + durations(i)];
+%         y_C = [y_C, 0, amplitudes(i), amplitudes(i), 0];
+%     end
+%     
+%      currentOffset = currentOffset + max(onsets + durations) + breakDuration;
+% end
+% 
+% x_C = [0, x_C, max(x_C)];
+% y_C = [0, y_C, 0];
+% 
+% % Reset offset for the next blocks
+% currentOffset = 0;
+% 
+% % Construct plot data for blocks_B
+% for b = 1:length(blocks_B)
+%     block = blocks_B{b};
+%     onsets = block.Onset;
+%     durations = block.Duration;
+%     amplitudes = block.Amplitude;
+%     
+%     for i = 1:height(block)
+%         x_B = [x_B, currentOffset + onsets(i), currentOffset + onsets(i), currentOffset + onsets(i) + durations(i), currentOffset + onsets(i) + durations(i)];
+%         y_B = [y_B, 0, amplitudes(i), amplitudes(i), 0];
+%     end
+%     
+%     currentOffset = currentOffset + max(onsets + durations) + breakDuration;
+% end
+% x_B = [0, x_B, max(x_B)];
+% y_B = [0, y_B, 0];
+% 
+% 
+% % Plot the data
+% figure;
+% hold on;
+% plot(x_F, y_F, 'LineWidth', 2, 'Color', [0.7, 0.4, 0.4, 0.5]); % Blue for Block*SWF
+% %plot(x_C, y_C, 'LineWidth', 2, 'Color', [0.4, 0.7, 0.4, 0.5]); % Red for Block*SWC
+% %plot(x_B, y_B, 'LineWidth', 2, 'Color', [0.4, 0.4, 0.7, 0.5]); % Green for Block*SWB
+% xlabel('Time (s)');
+% ylabel('Amplitude');
+% title(['Regressor Plot Across Blocks - ',subFolder]);
+% %legend('Block*SWF', 'Block*SWC', 'Block*SWB');
+% grid on;
+% hold off;
+
+end
