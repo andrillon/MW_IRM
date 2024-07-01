@@ -171,16 +171,17 @@ end
 clear *_effect
 newlabels=layout.label(1:end-2);
 for nCh=1:length(newlabels)
-    
-    mdl_FA=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_FA~1+Block+SW_density+(1+Block|SubID)');
+        fprintf('channel %s %g/%g\n',newlabels{nCh},nCh,length(newlabels))
+
+    mdl_FA=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_FA~1+Block+SW_density+(1|SubID)');
     FA_effect(nCh,1)=mdl_FA.Coefficients.tStat(match_str(mdl_FA.CoefficientNames,'SW_density'));
     FA_effect(nCh,2)=mdl_FA.Coefficients.pValue(match_str(mdl_FA.CoefficientNames,'SW_density'));
     
-    mdl_Miss=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Miss~1+Block+SW_density+(1+Block|SubID)');
+    mdl_Miss=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Miss~1+Block+SW_density+(1|SubID)');
     Miss_effect(nCh,1)=mdl_Miss.Coefficients.tStat(match_str(mdl_Miss.CoefficientNames,'SW_density'));
     Miss_effect(nCh,2)=mdl_Miss.Coefficients.pValue(match_str(mdl_Miss.CoefficientNames,'SW_density'));
     
-    mdl_RT=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_HitRT~1+Block+SW_density+(1+Block|SubID)');
+    mdl_RT=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_HitRT~1+Block+SW_density+(1|SubID)');
     RT_effect(nCh,1)=mdl_RT.Coefficients.tStat(match_str(mdl_RT.CoefficientNames,'SW_density'));
     RT_effect(nCh,2)=mdl_RT.Coefficients.pValue(match_str(mdl_RT.CoefficientNames,'SW_density'));
     
@@ -189,7 +190,7 @@ end
 
 
 % Correlation with Mindstate
-
+%%
 %table2_SW.SART_MB2=table2_SW.SART_MB+table2_SW.SART_DK;
 % table_SW.SART_MW(table_SW.SART_MW~=1 & table_SW.SART_ON~=1)=NaN;
 % table_SW.SART_MB(table_SW.SART_MB~=1 & table_SW.SART_ON~=1)=NaN;
@@ -205,7 +206,12 @@ table_SW.SART_MB=nan(size(table_SW,1),1);
 table_SW.SART_MB(table_SW.SART_State=='MB' | table_SW.SART_State=='DK')=1;
 table_SW.SART_MB(table_SW.SART_State=='ON')=0;
 
+table_SW.SART_Vig2=nan(size(table_SW,1),1);
+table_SW.SART_Vig2(table_SW.SART_Vig==1 | table_SW.SART_Vig==2)=0;
+table_SW.SART_Vig2(table_SW.SART_Vig==3 | table_SW.SART_Vig==4)=1;
+
 for nCh=1:length(newlabels)
+    fprintf('channel %s %g/%g\n',newlabels{nCh},nCh,length(newlabels))
     mdl_MW=fitglme(table_SW(table_SW.Elec==newlabels{nCh} & isnan(table_SW.SART_MW)==0,:),'SART_MW~1+Block+SW_density+(1+Block|SubID)','Distribution','binomial');
     MW_effect(nCh,1)=mdl_MW.Coefficients.tStat(match_str(mdl_MW.CoefficientNames,'SW_density'));
     MW_effect(nCh,2)=mdl_MW.Coefficients.pValue(match_str(mdl_MW.CoefficientNames,'SW_density'));
@@ -218,7 +224,7 @@ for nCh=1:length(newlabels)
     ON_effect(nCh,1)=mdl_ON.Coefficients.tStat(match_str(mdl_ON.CoefficientNames,'SW_density'));
     ON_effect(nCh,2)=mdl_ON.Coefficients.pValue(match_str(mdl_ON.CoefficientNames,'SW_density'));
     
-    mdl_VIG=fitlme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Vig~1+Block+SW_density+(1+Block|SubID)');
+    mdl_VIG=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Vig2~1+Block+SW_density+(1+Block|SubID)');
     VIG_effect(nCh,1)=mdl_VIG.Coefficients.tStat(match_str(mdl_VIG.CoefficientNames,'SW_density'));
     VIG_effect(nCh,2)=mdl_VIG.Coefficients.pValue(match_str(mdl_VIG.CoefficientNames,'SW_density'));
 
@@ -251,15 +257,15 @@ colormap(cmap2);
 caxis([-1 1]*5)
 title('False Alarms', 'FontSize', 16)
 
-subplot(2,3,3);
-simpleTopoPlot_ft(RT_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(RT_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+subplot(2,3,4);
+simpleTopoPlot_ft(-ON_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ON_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
 %colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('Reaction Times', 'FontSize', 16)
+title('OFF vs ON', 'FontSize', 16)
 
-subplot(2,3,4);
+subplot(2,3,3);
 simpleTopoPlot_ft(VIG_effect(:,1), layout,'on',[],0,1);
 ft_plot_lay_me(layout, 'chanindx', find(VIG_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
 %colorbar;
