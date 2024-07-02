@@ -4,7 +4,9 @@
 
 %%
 
-TimeCourseDataset = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/antC*.mat');
+%TimeCourseDataset = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/f*_R*.mat');
+TimeCourseDataset = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Old/rffa_timecourse_adjunsted*.mat');
+TimeCourseDataset = TimeCourseDataset([12:16,18:36,38],:);
 
 GrandaverageEpoch = [];
 for k=1:size(TimeCourseDataset,1)
@@ -29,7 +31,26 @@ for k=1:size(TimeCourseDataset,1)
     Block4.Onset = Block4.Onset+Block3.Onset(end,1);
     AllBlocks = [Block1; Block2; Block3; Block4];
 
-    SWDataset = dir(['/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/TimingforfMRI/',SubID, '/*/*_Block*Fz.csv']); 
+%     % Identify rows where Type starts with 'ProbeEnd'
+%     probeEndRows = startsWith(AllBlocks.Type, 'ProbeEnd');
+%     % Find the indices of these rows
+%     probeEndIndices = find(probeEndRows);
+%     % Initialize an array to store indices of rows to be included in the new table
+%     followIndices = [];
+%     % Loop through each identified ProbeEnd row to get the following row
+%     for i = 1:length(probeEndIndices)
+%         % Check if the current ProbeEnd row is not the last row
+%         if probeEndIndices(i) < height(AllBlocks)
+%             % Add the index of the row that follows the current ProbeEnd row
+%             tempInd = probeEndIndices(i) + 1;
+%             followIndices = [followIndices; tempInd'];
+%         end
+%     end
+%     % Create a new table with the selected rows
+%     FirstFaceTrials = AllBlocks(followIndices, :);
+
+
+    SWDataset = dir(['/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/TimingforfMRI/',SubID, '/*/*_Block*FPz.csv']); 
     SWpathparts = split(SWDataset(1).name, "_");
     ChanID = split(SWpathparts{4}, ".");
     ChanID = ChanID{1};
@@ -45,55 +66,50 @@ for k=1:size(TimeCourseDataset,1)
     SWBlock4.Onset = SWBlock4.Onset+SWBlock3.Onset(end,1);
     AllSWBlocks = [SWBlock1; SWBlock2; SWBlock3; SWBlock4];
 
-    TRtimes = 1:size(TimeCourse,1);
-    TRtimes = TRtimes*1.56;
-
     TR = 1.56; % Repetition Time in seconds
     epochWindow = 20; % Time window in seconds
     epochPoints = round(epochWindow / TR); % Number of points in the time window
 
     % Extract event onsets
-    onsets = AllSWBlocks.Onset;
-    numEvents = height(AllSWBlocks);
-    allEpochs = [];
+    Tagettable = AllSWBlocks;
+    onsets = Tagettable.Onset;   
+    numEvents = height(Tagettable);
+    % Initialize matrix to store all epochs
+    allEpochs = NaN(numEvents, 2 * epochPoints + 1);
     
     for i = 1:numEvents
         % Convert onset time to data point index
         eventIndex = round(onsets(i) / TR);
+
         
         % Define start and end points of the epoch
         startIndex = eventIndex - epochPoints;
         endIndex = eventIndex + epochPoints;
         
-        % Ensure indices are within bounds
-        if startIndex < 1
-            startIndex = 1;
-        endIndex = startIndex + 2 * epochPoints; % Maintain epoch length
-        end
-        if endIndex > length(TimeCourse)
-            endIndex = length(TimeCourse);
-            startIndex = endIndex - 2 * epochPoints; % Maintain epoch length
-        end
+        % Extract the epoch, using NaNs for out-of-bounds indices
+        epoch = NaN(1, 2 * epochPoints + 1);
+        validStart = max(1, startIndex);
+        validEnd = min(length(TimeCourse), endIndex);
+        epoch((validStart - startIndex + 1):(validEnd - startIndex + 1)) = TimeCourse(validStart:validEnd);
         
-        % Extract the epoch
-        allEpochs(i, :) = TimeCourse(startIndex:endIndex);
+        % Store the epoch in the matrix
+        allEpochs(i, :) = epoch;
+        
     end
 
-    %removing probe onset activity
-    allEpochs(:,:)= allEpochs(:,:)-allEpochs(14,:);
-    % remove all mean activity
-    %allEpochs(:,:)= allEpochs(:,:)-mean(allEpochs(:,:));
+
+    % remove all mean activity in epoch
+    allEpochs(:,:)= allEpochs(:,:)-mean(TimeCourse);
+    %allEpochs(:,:)= allEpochs(:,:)-allEpochs(:,14);
 
     % Calculate the average activity across all epochs
-    averageEpoch = mean(allEpochs, 1);
+    averageEpoch = nanmean(allEpochs, 1);
 
     GrandaverageEpoch(k, :) = averageEpoch;
      % Calculate the standard error of the mean
-    sem = std(allEpochs, 0, 1) / sqrt(numEvents);
+    sem = nanstd(allEpochs, 0, 1) / sqrt(numEvents);
     % Calculate the 95% confidence interval
     ci95 = sem * 1.96;
-
-
 
     % Plot all individual epochs
     figure;
@@ -116,7 +132,26 @@ for k=1:size(TimeCourseDataset,1)
     set(gca,'FontSize',18,'FontWeight','bold')
     grid on;
     hold off;
-    %saveas(gcf,['/Users/kuszti/Documents/MATLAB/EEG_FMRI/Figures/ROIFigures' filesep SubID '_' TCpathparts{1}, '_', TCpathparts{2}, '_', ChanID, '.png'])
+    saveas(gcf,['/Users/kuszti/Documents/MATLAB/EEG_FMRI/Figures/ROIFigures' filesep SubID '_' TCpathparts{1}, '_', TCpathparts{2}, '_', ChanID, '.png'])
+
+
+    figure
+    xax = (0:length(TimeCourse)-1) * 1.56;
+    plot(xax, TimeCourse);
+    hold on
+    title(['Full time course' newline SubID ' - ' TCpathparts{1}, ' ', TCpathparts{2}, ' based on  ', ChanID]);
+    xlabel('Time course (sec)')
+    ylabel('Average BOLD activity')
+    axis(gca, 'tight')  
+
+        % Add vertical lines for trial onsets
+    for i = 1:height(AllSWBlocks)
+        x = AllSWBlocks.Onset(i);
+        line([x, x], ylim, 'Color', [0.4, 0.4, 0.4, 0.5], 'LineStyle', '-', 'LineWidth', 0.5);
+    end
+
+    saveas(gcf,['/Users/kuszti/Documents/MATLAB/EEG_FMRI/Figures/ROIFigures' filesep SubID '_TimeCour_', ChanID, '.png'])
+
 
 end
 
@@ -145,4 +180,6 @@ set(gcf,'Color','w')
 set(gca,'FontSize',18,'FontWeight','bold')
 grid on;
 hold off;
+% %saveas(gcf,['/Users/kuszti/Documents/MATLAB/EEG_FMRI/Figures/ROIFigures' filesep 'GrandAverage_' TCpathparts{1}, '_', TCpathparts{2}, '_', ChanID, '.png'])
+
 

@@ -105,10 +105,10 @@ Block4sws(:,end+1)=Block4sws(:,2)-30;
 % [Block4SWF, Block4SWC, Block4SWB] = SW_TimeRecodingforMR (Block4sws, BlockP{4},saveWaves);
 
 % Simulated data
-[Block1SWF, Block1SWC, Block1SWB] = SW_TimeRecodingforMR_surrogate (Block1sws, BlockP{1},saveWaves);
-[Block2SWF, Block2SWC, Block2SWB] = SW_TimeRecodingforMR_surrogate (Block2sws, BlockP{2},saveWaves);
-[Block3SWF, Block3SWC, Block3SWB] = SW_TimeRecodingforMR_surrogate (Block3sws, BlockP{3},saveWaves);
-[Block4SWF, Block4SWC, Block4SWB] = SW_TimeRecodingforMR_surrogate (Block4sws, BlockP{4},saveWaves);
+[Block1SWF, Block1SWC, Block1SWBs] = SW_TimeRecodingforMR_surrogate (Block1sws, BlockP{1},saveWaves);
+[Block2SWF, Block2SWCs, Block2SWBs] = SW_TimeRecodingforMR_surrogate (Block2sws, BlockP{2},saveWaves);
+[Block3SWF, Block3SWCs, Block3SWBs] = SW_TimeRecodingforMR_surrogate (Block3sws, BlockP{3},saveWaves);
+[Block4SWF, Block4SWCs, Block4SWBs] = SW_TimeRecodingforMR_surrogate (Block4sws, BlockP{4},saveWaves);
 
 
 % Single channel version
