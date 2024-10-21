@@ -18,6 +18,8 @@ files=dir([data_path filesep filesep 'RestingState/*clean_nt.set']);
 myERP_Elec={'Fz','Cz','Pz','Oz','C5','C6'};
 myERP_Elec2={{'F7','FT9'},{'F8','FT10'}};
 
+load ../Datasetinfo_RS_23-Sep-2024-17-21-25.mat
+
 %% loop across trials for baseline blocks
 mean_SW_ERP_byElec=[];
 mean_SW_ERP_byElec2=[];
@@ -93,6 +95,17 @@ for nF=1:length(files)
     all_Waves(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
 %     all_Waves(all_Waves(:,16)>paramSW.min_pptionNeg | all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
     
+% find missing probes
+    this_row=find_trials({Dataset.name},SubID);
+    if ~isempty(this_row)
+        if isempty(Dataset(this_row).BadEpochs)
+            probes_missing=[];
+        else
+            probes_missing=Dataset(this_row).BadEpochs{1};
+        end
+    end
+    all_probes=1:19;
+    all_probes=setdiff(all_probes,probes_missing);
 
     thr_Wave=[];
     slow_Waves=[];
@@ -110,12 +123,18 @@ for nF=1:length(files)
    
          slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
     end
+    oldBlockNumbers=slow_Waves(:,2);
+    uniqueBlocksSW=unique(oldBlockNumbers);
+    for nBl=1:length(uniqueBlocksSW)
+        slow_Waves(oldBlockNumbers==uniqueBlocksSW(nBl),2)=all_probes(nBl);
+    end
+    slow_Waves(:,end+1)=oldBlockNumbers;
 
     save([save_path filesep 'prct_DSS_RS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
     
     numEpochs = size(EEG.data,3);
 
-    maxnumEpochs = 18;
+    maxnumEpochs = 19;
     [nout,xout]=hist(slow_Waves(:,3),1:length(ChanLabels));
     all_ChanLabels=[all_ChanLabels ; ChanLabels];
     SW_dens(nFc,:)=nout/(window_before_probes/60*maxnumEpochs);
@@ -126,7 +145,6 @@ for nF=1:length(files)
     SW_dens_perProbe(nFc,:,:)=nan(maxnumEpochs,size(EEG.data,1));
 
     SW_dens_perProbe(nFc,1:maxnumEpochs,1:63)=nan;
-    all_probes = 1:numEpochs;
     for nP=all_probes
         [nout,xout]=hist(slow_Waves(slow_Waves(:,2)==nP,3),1:length(ChanLabels));
         SW_dens_perProbe(nFc,nP,:)=nout/(window_before_probes/60);
@@ -142,7 +160,7 @@ for nF=1:length(files)
         all_PosSl(nFc,nE)=nanmean(slow_Waves(slow_Waves(:,3)==nE,13));
         
         temp_SW=slow_Waves(slow_Waves(:,3)==nE,5);
-        temp_SW_nProbe=slow_Waves(slow_Waves(:,3)==nE,2);
+        temp_SW_nProbe=slow_Waves(slow_Waves(:,3)==nE,16);
         time_SW=EEG.times(temp_SW)/1000;
         
         if ismember(ChanLabels{nE},myERP_Elec)
@@ -176,7 +194,7 @@ for nF=1:length(files)
             end
             this_PairE=match_str(ChanLabels,myERP_Elec2{2}(ismember(myERP_Elec2{1},ChanLabels{nE})));
             temp_SW=slow_Waves(slow_Waves(:,3)==this_PairE,5);
-            temp_SW_nProbe=slow_Waves(slow_Waves(:,3)==this_PairE ,2);
+            temp_SW_nProbe=slow_Waves(slow_Waves(:,3)==this_PairE ,16);
             for m=1:length(temp_SW)
                 if temp_SW(m)-0.5*EEG.srate>0 && temp_SW(m)+1*EEG.srate<25*EEG.srate
                     vec=squeeze(probe_EEG(temp_SW_nProbe(m),nE,(temp_SW(m)-0.5*EEG.srate):(temp_SW(m)+1*EEG.srate)))';
@@ -216,7 +234,7 @@ for nF=1:length(files)
     
     %    all_SW_probes=[all_SW_probes ; str2num(SubID(6:end))*ones(size(probe_res,1)-sum(ismember(probe_res(:,1),probes_missing)),1) probe_res(~ismember(probe_res(:,1),probes_missing),[1 5 17 18 19]) squeeze(nanmean(SW_dens_perProbe(nFc,~ismember(probe_res(:,1),probes_missing),:),3))' squeeze(SW_dens_perProbe(nFc,~ismember(probe_res(:,1),probes_missing),:))];
 
-    all_SW_probes=[all_SW_probes ; str2num(SubID(6:end))*ones(18,1) squeeze(nanmean(SW_dens_perProbe(nFc,:,:),3))' squeeze(SW_dens_perProbe(nFc,:,:))];
+    all_SW_probes=[all_SW_probes ; str2num(SubID(6:end))*ones(19,1) squeeze(nanmean(SW_dens_perProbe(nFc,:,:),3))' squeeze(SW_dens_perProbe(nFc,:,:))];
 end
 
 %%
@@ -239,7 +257,7 @@ end
 
 %%
 figure;
-simpleTplot(1:18,squeeze(mean(SW_dens_perProbe(:,:,match_str({EEG.chanlocs.labels},'Fz')),3)),0,[1 0.5 0],0,'-',0.5,1,[],1,4);
+simpleTplot(1:19,squeeze(mean(SW_dens_perProbe(:,:,match_str({EEG.chanlocs.labels},'Fz')),3)),0,[1 0.5 0],0,'-',0.5,1,[],1,4);
 hold on; format_fig;
 for k=[10.5 20.5 30.5]
     line([1 1]*k,ylim,'Color','k','LineStyle','--')
