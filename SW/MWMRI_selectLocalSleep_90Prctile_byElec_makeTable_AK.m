@@ -191,6 +191,9 @@ newlabels=layout.label(1:end-2);
 table_SW.SART_ON=nan(size(table_SW,1),1);
 table_SW.SART_ON(table_SW.SART_State=='ON')=1;
 table_SW.SART_ON(table_SW.SART_State~='ON')=0;
+table_SW.Block = double(table_SW.Block);
+table_SW.Block = categorical(table_SW.Block, [1, 2, 3, 4], {'1st', '2nd', '3rd', '4th'}, 'Ordinal',true);
+
 
 
 for nCh=1:length(newlabels)
@@ -213,37 +216,29 @@ for nCh=1:length(newlabels)
     mdl_ON_U=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_upslope+(1+Block|SubID)','Distribution','binomial');
     ON_U_effect(nCh,1)=mdl_ON_U.Coefficients.tStat(match_str(mdl_ON_U.CoefficientNames,'SW_upslope'));
     ON_U_effect(nCh,2)=mdl_ON_U.Coefficients.pValue(match_str(mdl_ON_U.CoefficientNames,'SW_upslope'));
-
-end
-
-
-for nCh=1:length(newlabels)
-
-    mdl_ROI1=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROI4~1+Block+SW_density+SW_amplitude+(1+Block|SubID)','Distribution','Normal');
-    ROI1_effect(nCh,1)=mdl_ROI1.Coefficients.tStat(match_str(mdl_ROI1.CoefficientNames,'SW_density'));
-    ROI1_effect(nCh,2)=mdl_ROI1.Coefficients.pValue(match_str(mdl_ROI1.CoefficientNames,'SW_density'));
-    ROI1_effect(nCh,3)=mdl_ROI1.Coefficients.tStat(match_str(mdl_ROI1.CoefficientNames,'SW_amplitude'));
-    ROI1_effect(nCh,4)=mdl_ROI1.Coefficients.pValue(match_str(mdl_ROI1.CoefficientNames,'SW_amplitude'));
-    ROI1_effect(nCh,5)=mdl_ROI1.Coefficients.tStat(match_str(mdl_ROI1.CoefficientNames,'Block'));
-    ROI1_effect(nCh,6)=mdl_ROI1.Coefficients.pValue(match_str(mdl_ROI1.CoefficientNames,'Block'));
     fprintf('Electrode %s\n',newlabels{nCh})
+
 end
 
 
 %% Figure
 
-% effect = [ON_D_effect(:,1), ON_A_effect(:,1), ON_F_effect(:,1), ON_Do_effect(:,1), ON_U_effect(:,1)];
-% all_pV = [ON_D_effect(:,2); ON_A_effect(:,2); ON_F_effect(:,2); ON_Do_effect(:,2); ON_U_effect(:,2)];
-effect = [ROI1_effect(:,1), ROI1_effect(:,3), ROI1_effect(:,5)];
-all_pV = [ROI1_effect(:,2), ROI1_effect(:,4), ROI1_effect(:,6)];
-FDR_Thr=0.05; %fdr(all_pV,0.05);
+effect = [ON_D_effect(:,1), ON_A_effect(:,1), ON_F_effect(:,1), ON_Do_effect(:,1), ON_U_effect(:,1)];
+%all_pV = [ON_D_effect(:,2); ON_A_effect(:,2); ON_F_effect(:,2); ON_Do_effect(:,2); ON_U_effect(:,2)];
+all_pV = [ON_D_effect(:,2)];
+
+% effect = [ROI1_effect(:,1), ROI1_effect(:,3), ROI1_effect(:,5)];
+% all_pV = [ROI1_effect(:,2), ROI1_effect(:,4), ROI1_effect(:,6)];
+FDR_Thr=0.05;%fdr(all_pV,0.05);
 cmap2=cbrewer('div','RdBu',64); cmap2=flipud(cmap2);
 minmax = ceil(max(max(abs(effect))));
 
 %
 figure;
+set(gcf, 'Position', [100, 100, 800, 600]); % Set the figure position and size
 
-subplot(2,3,1)
+
+subplot(2,2,1)
 simpleTopoPlot_ft(ON_D_effect(:,1), layout,'on',[],0,1);
 ft_plot_lay_me(layout, 'chanindx', find(ON_D_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
 colorbar;
@@ -251,7 +246,7 @@ colormap(cmap2);
 caxis([-1 1]*5)
 title('OFF vs ON Density', 'FontSize', 16)
 
-subplot(2,3,2);
+subplot(2,2,2);
 simpleTopoPlot_ft(ON_A_effect(:,1), layout,'on',[],0,1);
 ft_plot_lay_me(layout, 'chanindx', find(ON_A_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
 colorbar;
@@ -259,15 +254,7 @@ colormap(cmap2);
 caxis([-1 1]*5)
 title('OFF vs ON Amplitude', 'FontSize', 16)
 
-subplot(2,3,3);
-simpleTopoPlot_ft(ON_F_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(ON_F_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
-colorbar;
-colormap(cmap2);
-caxis([-1 1]*5)
-title('OFF vs ON Freq', 'FontSize', 16)
-
-subplot(2,3,4);
+subplot(2,2,3);
 simpleTopoPlot_ft(ON_Do_effect(:,1), layout,'on',[],0,1);
 ft_plot_lay_me(layout, 'chanindx', find(ON_Do_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
 colorbar;
@@ -275,7 +262,7 @@ colormap(cmap2);
 caxis([-1 1]*5)
 title('OFF vs ON Downslope', 'FontSize', 16)
 
-subplot(2,3,5);
+subplot(2,2,4);
 simpleTopoPlot_ft(ON_U_effect(:,1), layout,'on',[],0,1);
 ft_plot_lay_me(layout, 'chanindx', find(ON_U_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
 colorbar;
@@ -286,38 +273,75 @@ title('OFF vs ON Upslope', 'FontSize', 16)
 
 
 %%
-effect = [ROI1_effect(:,1), ROI1_effect(:,3), ROI1_effect(:,5)];
-all_pV = [ROI1_effect(:,2), ROI1_effect(:,4), ROI1_effect(:,6)];
+
+
+
+for nCh=1:length(newlabels)
+    mdl_ROI1_D=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROI2~1+Block+SW_density+(1+Block|SubID)','Distribution','Normal');
+    ROI_effect(nCh,1)=mdl_ROI1_D.Coefficients.tStat(match_str(mdl_ROI1_D.CoefficientNames,'SW_density'));
+    ROI_effect(nCh,2)=mdl_ROI1_D.Coefficients.pValue(match_str(mdl_ROI1_D.CoefficientNames,'SW_density'));
+    fprintf('Electrode %s\n',newlabels{nCh})
+
+    mdl_ROI1_A=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROI2~1+Block+SW_amplitude+(1+Block|SubID)','Distribution','Normal');
+    ROI_A_effect(nCh,1)=mdl_ROI1_A.Coefficients.tStat(match_str(mdl_ROI1_A.CoefficientNames,'SW_amplitude'));
+    ROI_A_effect(nCh,2)=mdl_ROI1_A.Coefficients.pValue(match_str(mdl_ROI1_A.CoefficientNames,'SW_amplitude'));
+
+    mdl_ROI1_F=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROI2~1+Block+SW_frequency+(1+Block|SubID)','Distribution','Normal');
+    ROI_F_effect(nCh,1)=mdl_ROI1_F.Coefficients.tStat(match_str(mdl_ROI1_F.CoefficientNames,'SW_frequency'));
+    ROI_F_effect(nCh,2)=mdl_ROI1_F.Coefficients.pValue(match_str(mdl_ROI1_F.CoefficientNames,'SW_frequency'));
+
+    mdl_ROI1_Do=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROI2~1+Block+SW_downslope+(1+Block|SubID)','Distribution','Normal');
+    ROI_Do_effect(nCh,1)=mdl_ROI1_Do.Coefficients.tStat(match_str(mdl_ROI1_Do.CoefficientNames,'SW_downslope'));
+    ROI_Do_effect(nCh,2)=mdl_ROI1_Do.Coefficients.pValue(match_str(mdl_ROI1_Do.CoefficientNames,'SW_downslope'));
+
+    mdl_ROI1_U=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROI2~1+Block+SW_upslope+(1+Block|SubID)','Distribution','Normal');
+    ROI_U_effect(nCh,1)=mdl_ROI1_U.Coefficients.tStat(match_str(mdl_ROI1_U.CoefficientNames,'SW_upslope'));
+    ROI_U_effect(nCh,2)=mdl_ROI1_U.Coefficients.pValue(match_str(mdl_ROI1_U.CoefficientNames,'SW_upslope'));
+
+end
+
+
+effect = [ROI_effect(:,1), ROI_A_effect(:,1), ROI_F_effect(:,1), ROI_Do_effect(:,1), ROI_U_effect(:,1) ];
 FDR_Thr=0.05; %fdr(all_pV,0.05);
 cmap2=cbrewer('div','RdBu',64); cmap2=flipud(cmap2);
 minmax = ceil(max(max(abs(effect))));
 
 
 figure;
+set(gcf, 'Position', [100, 100, 800, 600]); % Set the figure position and size
 
-subplot(1,3,1)
-simpleTopoPlot_ft(ROI1_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(ROI1_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+
+subplot(2,2,1)
+simpleTopoPlot_ft(ROI_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ROI_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
 colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('Density', 'FontSize', 16)
+title('ROI-1 (right Fusform.) - Density', 'FontSize', 16)
 
-subplot(1,3,2);
-simpleTopoPlot_ft(ROI1_effect(:,3), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(ROI1_effect(:,4)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+subplot(2,2,2)
+simpleTopoPlot_ft(ROI_A_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ROI_A_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
 colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('Amplitude', 'FontSize', 16)
+title('ROI-1 (right Fusform.) - Amplitude', 'FontSize', 16)
 
-subplot(1,3,3);
-simpleTopoPlot_ft(ROI1_effect(:,5), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(ROI1_effect(:,6)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+subplot(2,2,3)
+simpleTopoPlot_ft(ROI_Do_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ROI_Do_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
 colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('Block effect', 'FontSize', 16)
+title('ROI-1 (right Fusform.) - Downslope', 'FontSize', 16)
+
+subplot(2,2,4)
+simpleTopoPlot_ft(ROI_U_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ROI_U_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+colorbar;
+colormap(cmap2);
+caxis([-1 1]*5)
+title('ROI-1 (right Fusform.) - Upslope', 'FontSize', 16)
 
 
 
