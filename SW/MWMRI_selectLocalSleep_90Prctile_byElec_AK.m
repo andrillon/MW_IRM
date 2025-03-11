@@ -198,7 +198,7 @@ for nF=1:length(files)
         slow_Waves(oldBlockNumbers==uniqueBlocksSW(nBl),2)=all_probes(nBl);
     end
     slow_Waves(:,end+1)=oldBlockNumbers;
-    save([save_path filesep 'prct_DSS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
+    %save([save_path filesep 'prct_DSS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
     
     [nout,xout]=hist(slow_Waves(:,3),1:length(ChanLabels));
     all_ChanLabels=[all_ChanLabels ; ChanLabels];
@@ -545,7 +545,9 @@ for nCh=1:size(mean_SW_ERP_byElec2,1)
 end
 
 
+%%
+
+SW_dens_perProbe_Task = SW_dens_perProbe;
 
 
-
-
+save([save_path filesep 'SW_dens_perProbe_Task'],'SW_dens_perProbe_Task')

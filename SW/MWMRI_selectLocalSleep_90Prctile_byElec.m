@@ -25,6 +25,8 @@ all_ChanLabels=[];
 nFc=0;
 all_SW_probes=[];
 window_before_probes=20; % in seconds
+
+All_slow_Waves_Task = [];
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
@@ -154,6 +156,19 @@ for nF=1:length(files)
 %     paramSW.min_pptionNeg=1;
     
     all_Waves=double(all_Waves);
+    % % Create the histogram
+    % figure; % Creates a new figure window
+    % histogram(all_Waves(:, 4));
+    % xlabel('Peak2Peak Amplitude'); % Label for the x-axis
+    % ylabel('Count'); % Label for the y-axis
+    % title([SubID, ' Task - Before selection']); % Set the title of the histogram
+    % format_fig;
+    % % Save the figure
+    % outputDir = '/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Figures/';
+    % filename = sprintf('%s%s_SWhist_task_beforeselection.png', outputDir, SubID);  % Construct filename
+    % saveas(gcf, filename);  % Save the figure as a PNG file
+    % close
+
     all_Waves(EEG.times(all_Waves(:,5))<-window_before_probes*1000 | EEG.times(all_Waves(:,5))>0,:)=[];
     all_freq=1./(abs((all_Waves(:,5)-all_Waves(:,7)))./EEG.srate);
     fprintf('... ... %g %% waves discarded because of timing\n',mean(all_Waves(:,7)/EEG.srate>30)*100)
@@ -163,7 +178,21 @@ for nF=1:length(files)
 %     fprintf('... ... %g %% waves discarded because of pption neg elect\n',mean(all_Waves(:,16)>paramSW.min_pptionNeg)*100)
     all_Waves(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
 %     all_Waves(all_Waves(:,16)>paramSW.min_pptionNeg | all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
+% % Create the histogram
+%     figure; % Creates a new figure window
+%     histogram(all_Waves(:, 4));
+%     xlabel('Peak2Peak Amplitude'); % Label for the x-axis
+%     ylabel('Count'); % Label for the y-axis
+%     title([SubID, ' Task - After selection']); % Set the title of the histogram
+%     format_fig;
+%     % Save the figure
+%     outputDir = '/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Figures/';
+%     filename = sprintf('%s%s_SWhist_task_afterselection.png', outputDir, SubID);  % Construct filename
+%     saveas(gcf, filename);  % Save the figure as a PNG file
+%     close
     
+
+
 % find missing probes
     this_row=find_trials({Dataset.name},SubID);
     if ~isempty(this_row)
@@ -178,6 +207,7 @@ for nF=1:length(files)
 
     thr_Wave=[];
     slow_Waves=[];
+
     for nE=1:length(ChanLabels)
         thisE_Waves=all_Waves(all_Waves(:,3)==nE,:);
         temp_p2p=thisE_Waves(:,paramSW.AmpCriterionIdx);
@@ -192,13 +222,29 @@ for nF=1:length(files)
    
          slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
     end
+
+    % % Create the histogram
+    % figure; % Creates a new figure window
+    % histogram(slow_Waves(:, 4));
+    % xlabel('Peak2Peak Amplitude'); % Label for the x-axis
+    % ylabel('Count'); % Label for the y-axis
+    % title([SubID, ' Task - After thresholding']); % Set the title of the histogram
+    % format_fig;
+    % % Save the figure
+    % outputDir = '/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Figures/';
+    % filename = sprintf('%s%s_SWhist_task_afterthreshold.png', outputDir, SubID);  % Construct filename
+    % saveas(gcf, filename);  % Save the figure as a PNG file
+    % close
+
     oldBlockNumbers=slow_Waves(:,2);
     uniqueBlocksSW=unique(oldBlockNumbers);
     for nBl=1:length(uniqueBlocksSW)
         slow_Waves(oldBlockNumbers==uniqueBlocksSW(nBl),2)=all_probes(nBl);
     end
     slow_Waves(:,end+1)=oldBlockNumbers;
-    save([save_path filesep 'prct_DSS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
+    %save([save_path filesep 'prct_25s_DSS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
+
+    All_slow_Waves_Task = [All_slow_Waves_Task; str2num(SubID(6:end))*ones(size(slow_Waves,1),1), slow_Waves];
     
     [nout,xout]=hist(slow_Waves(:,3),1:length(ChanLabels));
     all_ChanLabels=[all_ChanLabels ; ChanLabels];

@@ -18,8 +18,7 @@ files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
 
 
 %%
-%table_SW=array2table(zeros(0,25),'VariableNames',{'SubID','Block','Probe','Elec','SW_density','SW_amplitude','SW_frequency','SW_downslope','SW_upslope','SART_Miss','SART_FA','SART_HitRT','SART_ON','SART_State','SART_Vig','SART_MWcat','SART_StateError','ROI1', 'ROI2', 'ROI3', 'ROI4', 'ROIfrontR', 'ROIfrontMP', 'ROIbackR', 'ROIbackMP'});
-table_SW=array2table(zeros(0,19),'VariableNames',{'SubID','Block','Probe','Elec','SW_density','SW_amplitude','SW_frequency','SW_downslope','SW_upslope','SART_Miss','SART_FA','SART_HitRT','SART_ON','SART_State','SART_Vig','SART_MWcat','SART_StateError', 'ROIfront', 'ROIback',});
+table_SW=array2table(zeros(0,25),'VariableNames',{'SubID','Block','Probe','Elec','SW_density','SW_amplitude','SW_frequency','SW_downslope','SW_upslope','SART_Miss','SART_FA','SART_HitRT','SART_ON','SART_State','SART_Vig','SART_MWcat','SART_StateError','ROI1', 'ROI2', 'ROI3', 'ROI4', 'ROIfrontR', 'ROIfrontMP', 'ROIbackR', 'ROIbackMP'});
 table_SW.SubID=categorical(table_SW.SubID);
 table_SW.Elec=categorical(table_SW.Elec);
 table_SW.SART_State=categorical(table_SW.SART_State);
@@ -96,7 +95,6 @@ for nF=1:length(files)
 %         slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
 %     end
     load([save_path filesep 'prct_DSS_SW_' SubID]);%,'slow_Waves','paramSW','ChanLabels')
-
     % ROI1 = importdata([ROIpath 'Preprobe10sARV_not_ot03422_s' SubID(end-2:end) '.mat']); % Bilat Ant cing
     % ROI2 = importdata([ROIpath 'Preprobe10sARV_not_ot2-3830_s' SubID(end-2:end) '.mat']); % Bilat mid-cing, L post cing
     % ROI3 = importdata([ROIpath 'Preprobe10sARV_not_ot_14-6430_s' SubID(end-2:end) '.mat']); %R cuenous, precuneous
@@ -111,10 +109,10 @@ for nF=1:length(files)
     %     continue;
     % end
 
-     ROIfront = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_mars_s' SubID(end-2:end) '.mat']); % marsbar  Preprobe20sARV_back_mwmbVSot_spmcon4
-     % ROIfrontMP = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_spmcon4filt_s' SubID(end-2:end) '.mat']); % filt
-     ROIback = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_mars_s' SubID(end-2:end) '.mat']); % marsmar
-     % ROIbackMP = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_spmcon4filt_s' SubID(end-2:end) '.mat']); % Preprobe5sARV_back_mwmbVSot_mars_s242
+     ROIfrontR = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_spmcon4_s' SubID(end-2:end) '.mat']); % marsbar  Preprobe20sARV_back_mwmbVSot_spmcon4
+     ROIfrontMP = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_spmcon4filt_s' SubID(end-2:end) '.mat']); % filt
+     ROIbackR = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_spmcon4_s' SubID(end-2:end) '.mat']); % marsmar
+     ROIbackMP = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_spmcon4filt_s' SubID(end-2:end) '.mat']); % Preprobe5sARV_back_mwmbVSot_mars_s242
 
 
     
@@ -234,9 +232,7 @@ for nF=1:length(files)
         
     end
 end
-writetable(table_SW,[save_path filesep 'MW_MRI_SW_Behav_PerProbe_ROI_marsbar.txt']);
-
-
+writetable(table_SW,[save_path filesep 'MW_MRI_SW_Behav_PerProbe_ROI.txt']);
 %%
 addpath((path_fieldtrip))
 ft_defaults;

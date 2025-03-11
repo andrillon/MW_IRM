@@ -1,0 +1,329 @@
+%%
+
+% marsbar raw data
+% mpcorrected are eigen values
+% whitefilt has big jumps across blocks
+
+
+
+%%
+
+TimeCourseDataset_ns = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/b*_timecourse_n*.mat'); % fr*_timecourse_s*.mat 
+TimeCourseDataset = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/b*_timecourse_s*.mat'); % fr*_timecourse_s*.mat 
+
+
+TimeCourseDataset_B1 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_b*_timecourse_s*mp*_1.mat'); % VOI_f*whitefilt*_1 mpcorrected
+TimeCourseDataset_B2 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_b*_timecourse_s*mp*_2.mat'); % VOI_b*_timecourse_s*con*_1.mat
+TimeCourseDataset_B3 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_b*_timecourse_s*mp*_3.mat');
+TimeCourseDataset_B4 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_b*_timecourse_s*mp*_4.mat');
+
+TimeCourseDataset_B1c = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_b*_timecourse_s*con*_1.mat'); % VOI_f*whitefilt*_1 mpcorrected
+TimeCourseDataset_B2c = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_b*_timecourse_s*con*_2.mat'); % VOI_b*_timecourse_s*con*_1.mat
+TimeCourseDataset_B3c = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_b*_timecourse_s*con*_3.mat');
+TimeCourseDataset_B4c = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_b*_timecourse_s*con*_4.mat');
+
+
+TimeCourseDataset_ns([14,23],:)=[];
+TimeCourseDataset([14,23],:)=[];
+TimeCourseDataset_B1([14,23],:)=[];
+TimeCourseDataset_B2([14,23],:)=[];
+TimeCourseDataset_B3([14,23],:)=[];
+TimeCourseDataset_B4([14,23],:)=[];
+
+
+for k=1:size(TimeCourseDataset_B1,1)
+    
+    TCpathparts = split(TimeCourseDataset_B1(k).name, "_");
+    filen = [TCpathparts{1}, '_', TCpathparts{2}, '_', TCpathparts{3}];
+    SubID = TCpathparts{6};
+
+    % if strcmp(SubID, 's232') | strcmp(SubID, 's241')
+    %     continue
+    % end
+   
+    load([TimeCourseDataset(k).folder filesep TimeCourseDataset(k).name]);
+    TimeCourseM = ROI_data_mars;
+
+    load([TimeCourseDataset_ns(k).folder filesep TimeCourseDataset_ns(k).name]);
+    TimeCourseM_ns = ROI_data_mars;
+    
+    TimeCourseSPM1 = [];
+    load([TimeCourseDataset_B1(k).folder filesep TimeCourseDataset_B1(k).name]);
+    TimeCourseSPM1 = [TimeCourseSPM1; Y];
+    load([TimeCourseDataset_B2(k).folder filesep TimeCourseDataset_B2(k).name]);
+    TimeCourseSPM1 = [TimeCourseSPM1; Y];
+    load([TimeCourseDataset_B3(k).folder filesep TimeCourseDataset_B3(k).name]);
+    TimeCourseSPM1 = [TimeCourseSPM1; Y];
+    load([TimeCourseDataset_B4(k).folder filesep TimeCourseDataset_B4(k).name]);
+    TimeCourseSPM1 = [TimeCourseSPM1; Y];
+
+    TimeCourseSPMc = [];
+    load([TimeCourseDataset_B1c(k).folder filesep TimeCourseDataset_B1c(k).name]);
+    TimeCourseSPMc = [TimeCourseSPMc; Y];
+    load([TimeCourseDataset_B2c(k).folder filesep TimeCourseDataset_B2c(k).name]);
+    TimeCourseSPMc = [TimeCourseSPMc; Y];
+    load([TimeCourseDataset_B3c(k).folder filesep TimeCourseDataset_B3c(k).name]);
+    TimeCourseSPMc = [TimeCourseSPMc; Y];
+    load([TimeCourseDataset_B4c(k).folder filesep TimeCourseDataset_B4c(k).name]);
+    TimeCourseSPMc = [TimeCourseSPMc; Y];
+
+
+
+    BlockDataset = dir(['/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/TimingforfMRI/',SubID, '/*/full*.csv']); 
+    
+    Block1 = readtable([BlockDataset(1).folder filesep BlockDataset(1).name]);
+    Block2 = readtable([BlockDataset(2).folder filesep BlockDataset(2).name]);
+    Block3 = readtable([BlockDataset(3).folder filesep BlockDataset(3).name]);
+    Block4 = readtable([BlockDataset(4).folder filesep BlockDataset(4).name]);
+    
+    Block2.Onset = Block2.Onset+Block1.Onset(end,1);
+    Block3.Onset = Block3.Onset+Block2.Onset(end,1);
+    Block4.Onset = Block4.Onset+Block3.Onset(end,1);
+    AllBlocks = [Block1; Block2; Block3; Block4];
+
+
+%% FILTER
+% Sample rate 
+Fs = 1 / 1.56;  % Sampling frequency (Hz)
+% Filter design
+lowcut = 0.01;  % Lower frequency bound (Hz)
+highcut = 0.1;  % Upper frequency bound (Hz)
+nyquist = Fs/2; % Nyquist frequency
+% Calculate normalized frequency for filter design
+Wn = [lowcut highcut] / nyquist;
+% Design a Butterworth bandpass filter
+[b, a] = butter(4, Wn, 'bandpass');
+% Apply the filter using filtfilt for zero-phase filtering
+TimeCourseMfilt = filtfilt(b, a, TimeCourseM);
+TimeCourseM_nsfilt = filtfilt(b, a, TimeCourseM_ns);
+TimeCourseSPM1filt = filtfilt(b, a, TimeCourseSPM1);
+TimeCourseSPMcfilt = filtfilt(b, a, TimeCourseSPMc);
+
+TimeCourseMnorm = TimeCourseM - mean(TimeCourseM,"all");
+TimeCourseMfiltnorm = TimeCourseMfilt - mean(TimeCourseMfilt,"all");
+TimeCourseM_nsnorm = TimeCourseM_ns - mean(TimeCourseM_ns,"all");
+TimeCourseM_nsfiltnorm = TimeCourseM_nsfilt - mean(TimeCourseM_nsfilt,"all");
+
+AllTCs = [TimeCourseM, TimeCourseMfilt, TimeCourseM_ns, TimeCourseM_nsfilt, TimeCourseSPM1, TimeCourseSPM1filt, TimeCourseSPMc, TimeCourseSPMcfilt];
+
+correlationMatrix = corr(AllTCs);
+
+% Create a heatmap of the correlation matrix
+figure; % Create a new figure window
+imagesc(correlationMatrix); % Plot the correlation matrix
+colormap(parula); % Set the colormap to 'parula'
+colorbar; % Show a color bar
+title('Correlation Matrix of Timecourses');
+axis square; % Ensure the axes are square
+xlabel('Timecourse Index');
+ylabel('Timecourse Index');
+set(gca, 'XTick', 1:8, 'YTick', 1:8); % Set the tick marks
+caxis([-1 1]);
+
+% Add correlation coefficients as text on the heatmap
+[numRows, numCols] = size(correlationMatrix);
+for i = 1:numRows
+    for j = 1:numCols
+        % Format the correlation coefficient to two decimal places
+        text(j, i, sprintf('%.2f', correlationMatrix(i, j)), ...
+             'HorizontalAlignment', 'center', ...
+             'VerticalAlignment', 'middle', ...
+             'Color', 'black', 'FontSize', 12);
+    end
+end
+
+% title(['Posterior ROI Tiime - ' SubID]);
+% xlabel('Time course (Sampled at 0.641 Hz)'); % Label for the x-axis
+% ylabel('Average ROI Bold activity'); % Label for the y-axis
+% legend('Marsbar raw', 'Marsbar raw - non-smooth', 'Marsbar raw - filtered', 'Marsbar raw - non-smooth filtered', 'SPM movement params removed', 'SPM movement params removed - filtered', 'SPM contrast', 'SPM contrast - filtered');
+% hold off; % Release the hold
+% format_fig
+% figsavepath = ['/Users/kuszti/Documents/Git/MW_IRM/SW/Figures/posteriorTimeCourses_', SubID ,'.fig'];
+% %savefig(figsavepath);
+
+
+
+% colors = [0, 0, 0.8, 0.4; 0.8500, 0.3250, 0.0980, 0.4; 0.9290, 0.6940, 0.1250, 0.4; 0, 0.65, 0.55, 0.4;
+%           0.4660, 0.6740, 0.1880, 0.4; 0.2, 0.2, 0.2, 0.4; 0.6350, 0.0780, 0.1840, 0.4; 0.65, 0, 0.6, 0.4];
+% 
+% figure;
+% plot(TimeCourseMnorm, 'Color', colors(1,:), 'LineWidth', 2)
+% hold on
+% plot(TimeCourseM_nsnorm, 'Color', colors(2,:),'LineWidth', 2)
+% plot(TimeCourseMfiltnorm, 'Color', colors(3,:),'LineWidth', 2)
+% plot(TimeCourseM_nsfiltnorm, 'Color', colors(4,:),'LineWidth', 2)
+% 
+% plot(TimeCourseSPM1, 'Color', colors(5,:),'LineWidth', 2)
+% plot(TimeCourseSPM1filt, 'Color', colors(6,:),'LineWidth', 2)
+% 
+% plot(TimeCourseSPMc, 'Color', colors(7,:),'LineWidth', 2)
+% plot(TimeCourseSPMcfilt, 'Color', colors(8,:),'LineWidth', 2)
+% 
+% title(['Posterior ROI - ' SubID]);
+% xlabel('Time course (Sampled at 0.641 Hz)'); % Label for the x-axis
+% ylabel('Average ROI Bold activity'); % Label for the y-axis
+% legend('Marsbar raw', 'Marsbar raw - non-smooth', 'Marsbar raw - filtered', 'Marsbar raw - non-smooth filtered', 'SPM movement params removed', 'SPM movement params removed - filtered', 'SPM contrast', 'SPM contrast - filtered');
+% hold off; % Release the hold
+% format_fig
+% figsavepath = ['/Users/kuszti/Documents/Git/MW_IRM/SW/Figures/posteriorTimeCourses_', SubID ,'.fig'];
+% %savefig(figsavepath);
+
+
+fprintf('Done subject: %s \n',SubID);
+
+
+
+
+end
+
+% 
+%  Grandaverage = mean(GrandaverageEpoch, 1);
+%      % Calculate the standard error of the mean
+%  GAsem = std(GrandaverageEpoch, 0, 1) / sqrt(length(TimeCourseDataset));
+%     % Calculate the 95% confidence interval
+%  GAci95 = GAsem * 1.96;
+% 
+%  % Plot all individual epochs
+% figure;
+% hold on;
+% timeAxis = linspace(-epochWindow, epochWindow, size(Grandaverage, 2));
+% 
+% % Plot the average activity
+% plot(timeAxis, Grandaverage, 'b', 'LineWidth', 2); % Blue line for average
+% 
+% % Plot the 95% confidence interval
+% fill([timeAxis, fliplr(timeAxis)], [Grandaverage + GAci95, fliplr(Grandaverage - GAci95)], 'b', 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+% 
+% title(['SW-locked Grand Average Activity' newline TCpathparts{1}, ' ', TCpathparts{2}, ' based on  ', ChanID]);
+% xlabel('Time course [0 = SW onset] (sec)')
+% ylabel('BOLD activity')
+% set(gcf,'Color','w')
+% set(gca,'FontSize',18,'FontWeight','bold')
+% grid on;
+% hold off;
+% saveas(gcf,['/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Figures/ROIFigures' filesep 'GrandAverage_' TCpathparts{1}, '_', TCpathparts{2}, '_', ChanID, '.png'])
+% 
+
+%%
+% figure;
+% plot(TimeCourseM)
+% hold on
+% plot(TimeCourse)
+% plot(filteredData)
+
+% TimeCourseMnorm = TimeCourseM - mean(TimeCourseM,"all");
+% TimeCourseMnorm_ns = TimeCourseM_ns - mean(TimeCourseM_ns,"all");
+% 
+% 
+% figure;
+% plot(TimeCourseMnorm, 'Color', [0.5 0.0 0.5 0.4], 'LineWidth', 2)
+% hold on
+% plot(TimeCourseMnorm_ns, 'Color', [0 0.5 0.5 0.4],'LineWidth', 2)
+% plot(filteredData, 'Color', [0 0.5 0 0.4],'LineWidth', 2)
+% plot(filteredData_ns, 'Color', [0.7 0.5 0 0.4],'LineWidth', 2)
+% 
+% 
+% xlabel('Time course'); % Label for the x-axis
+% ylabel('Bold activity'); % Label for the y-axis
+% %legend('Marsbar', 'SPM');
+% legend('Raw timecourse', 'Raw timecourse - non-smoothing', 'Filtered timecourse', 'Filtered timecourse - non-smoothing');
+% hold off; % Release the hold
+% format_fig;
+
+
+%%
+ % % Select probe onset
+    % ProbeStop = {'ProbeStopONTASK', 'ProbeStopMINDWANDER', 'ProbeStopMINDBLANK', 'ProbeStopNORECALL'};
+    % isProbeStop = ismember(AllBlocks.Type, ProbeStop);
+    % SubsetTimes = AllBlocks(isProbeStop,:);
+    % 
+    % TR = 1.56; % Repetition Time in seconds
+    % epochWindow = 5; % Time window in seconds
+    % epochPoints = round(epochWindow / TR); % Number of points in the time window
+    % 
+    % % Extract event onsets
+    % Tagettable = SubsetTimes; %AllSWBlocks;
+    % onsets = Tagettable.Onset;   
+    % numEvents = height(Tagettable);
+    % % Initialize matrix to store all epochs
+    % allEpochs = NaN(numEvents, epochPoints + 1); % NaN(numEvents, 2 * epochPoints + 1);
+    % 
+    % for i = 1:numEvents
+    %     % Convert onset time to data point index
+    %     eventIndex = round(onsets(i) / TR);
+    % 
+    % 
+    %     % Define start and end points of the epoch
+    %     startIndex = eventIndex - epochPoints;
+    %     endIndex = eventIndex; %eventIndex + epochPoints;
+    % 
+    %     % Extract the epoch, using NaNs for out-of-bounds indices
+    %     epoch = NaN(1, epochPoints + 1); %NaN(1, 2 * epochPoints + 1);
+    %     validStart = max(1, startIndex);
+    %     validEnd = min(length(TimeCourse), endIndex);
+    %     epoch((validStart - startIndex + 1):(validEnd - startIndex + 1)) = TimeCourse(validStart:validEnd);
+    % 
+    %     % Store the epoch in the matrix
+    %     allEpochs(i, :) = epoch;
+    % 
+    % end
+    % 
+    % % save 
+    % MeanEpochs = mean(allEpochs,2);
+    % ROIsavepath ='/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI';
+    % savefilename1 = [ROIsavepath filesep 'Preprobe5sARV_',  filen, '_spmcon4_', SubID '.mat'];
+    % save(savefilename1,'MeanEpochs
+
+    %     % remove all mean activity in epoch
+%     allEpochs(:,:)= allEpochs(:,:)-mean(TimeCourse);
+%     %allEpochs(:,:)= allEpochs(:,:)-allEpochs(:,14);
+% 
+%     % Calculate the average activity across all epochs
+%     averageEpoch = nanmean(allEpochs, 1);
+% 
+%     GrandaverageEpoch(k, :) = averageEpoch;
+%      % Calculate the standard error of the mean
+%     sem = nanstd(allEpochs, 0, 1) / sqrt(numEvents);
+%     % Calculate the 95% confidence interval
+%     ci95 = sem * 1.96;
+% 
+%     % Plot all individual epochs
+%     figure;
+%     hold on;
+%     timeAxis = linspace(-epochWindow, epochWindow, size(allEpochs, 2));
+%     for i = 1:numEvents
+%         plot(timeAxis, allEpochs(i, :), 'Color', [0.8, 0.8, 0.8]); % Light gray color for individual epochs
+%     end
+%     
+%     % Plot the average activity
+%     plot(timeAxis, averageEpoch, 'b', 'LineWidth', 2); % Blue line for average
+%     
+%     % Plot the 95% confidence interval
+%     fill([timeAxis, fliplr(timeAxis)], [averageEpoch + ci95, fliplr(averageEpoch - ci95)], 'b', 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+%     
+%     title(['SW-locked Average Activity' newline SubID ' - ' TCpathparts{1}, ' ', TCpathparts{2}, ' based on  ', ChanID]);
+%     xlabel('Time course [0 = SW onset] (sec)')
+%     ylabel('BOLD activity')
+%     set(gcf,'Color','w')
+%     set(gca,'FontSize',18,'FontWeight','bold')
+%     grid on;
+%     hold off;
+%     saveas(gcf,['/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Figures/ROIFigures/' filesep SubID '_' TCpathparts{1}, '_', TCpathparts{2}, '_', ChanID, '.png'])
+% 
+
+%     figure
+%     xax = (0:length(TimeCourse)-1) * 1.56;
+%     plot(xax, TimeCourse);
+%     hold on
+%     title(['Full time course' newline SubID ' - ' TCpathparts{1}, ' ', TCpathparts{2}, ' based on  ', ChanID]);
+%     xlabel('Time course (sec)')
+%     ylabel('Average BOLD activity')
+%     axis(gca, 'tight')  
+% 
+%         % Add vertical lines for trial onsets
+%     for i = 1:height(AllSWBlocks)
+%         x = AllSWBlocks.Onset(i);
+%         line([x, x], ylim, 'Color', [0.4, 0.4, 0.4, 0.5], 'LineStyle', '-', 'LineWidth', 0.5);
+%     end
+% 
+%     saveas(gcf,['/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Figures/ROIFigures' filesep SubID '_TimeCoursewithSW_', ChanID, '.png'])

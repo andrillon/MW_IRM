@@ -2,7 +2,7 @@
 %%%%% Basic analyses on the preprocessed, filtered and epoch EEG data
 
 %% Init
-clear all;
+%clear all;
 % close all;
 
 run ../localdef.m
@@ -19,6 +19,7 @@ myERP_Elec={'Fz','Cz','Pz','Oz','C5','C6'};
 myERP_Elec2={{'F7','FT9'},{'F8','FT10'}};
 
 load ../Datasetinfo_RS_23-Sep-2024-17-21-25.mat
+%clearvars -except All_slow_Waves_Task
 
 %% loop across trials for baseline blocks
 mean_SW_ERP_byElec=[];
@@ -27,6 +28,8 @@ all_ChanLabels=[];
 nFc=0;
 all_SW_probes=[];
 window_before_probes=30; % in seconds
+All_slow_Waves_Rest = [];
+
 for nF=1:length(files)
     % load file with EEGlab
     fprintf('... file: %s\n',files(nF).name)
@@ -46,7 +49,6 @@ for nF=1:length(files)
     % load EEG
     addpath(genpath(path_eeglab));
     EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
-
     rmpath(genpath(path_eeglab));
 
     ChanLabels={EEG.chanlocs.labels};
@@ -85,6 +87,19 @@ for nF=1:length(files)
     
     all_Waves=double(all_Waves);
     %all_Waves(EEG.times(all_Waves(:,5))<-window_before_probes*1000 | EEG.times(all_Waves(:,5))>0,:)=[];
+    
+    % % Create the histogram
+    % figure; % Creates a new figure window
+    % histogram(all_Waves(:, 4));
+    % xlabel('Peak2Peak Amplitude'); % Label for the x-axis
+    % ylabel('Count'); % Label for the y-axis
+    % title([SubID, ' Resting - Before selection']); % Set the title of the histogram
+    % format_fig;
+    % % Save the figure
+    % outputDir = '/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Figures/';
+    % filename = sprintf('%s%s_SWhist_rest_beforeselection.png', outputDir, SubID);  % Construct filename
+    % saveas(gcf, filename);  % Save the figure as a PNG file
+    % close
 
     all_freq=1./(abs((all_Waves(:,5)-all_Waves(:,7)))./EEG.srate);
     %fprintf('... ... %g %% waves discarded because of timing\n',mean(all_Waves(:,7)/EEG.srate>30)*100)
@@ -95,6 +110,18 @@ for nF=1:length(files)
     all_Waves(all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
 %     all_Waves(all_Waves(:,16)>paramSW.min_pptionNeg | all_freq<paramSW.LimFrqW(1) | all_freq>paramSW.LimFrqW(2) | all_freq>paramSW.max_Freq | all_Waves(:,paramSW.AmpCriterionIdx)>paramSW.art_ampl | all_Waves(:,11)>paramSW.max_posampl| all_Waves(:,14)>paramSW.art_ampl| abs(all_Waves(:,15))>paramSW.art_ampl,:)=[];
     
+% % Create the histogram
+%     figure; % Creates a new figure window
+%     histogram(all_Waves(:, 4));
+%     xlabel('Peak2Peak Amplitude'); % Label for the x-axis
+%     ylabel('Count'); % Label for the y-axis
+%     title([SubID, ' Resting - After selection']); % Set the title of the histogram
+%     format_fig;
+%     % Save the figure
+%     outputDir = '/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Figures/';
+%     filename = sprintf('%s%s_SWhist_rest_afterselection.png', outputDir, SubID);  % Construct filename
+%     saveas(gcf, filename);  % Save the figure as a PNG file
+%     close
 % find missing probes
     this_row=find_trials({Dataset.name},SubID);
     if ~isempty(this_row)
@@ -123,6 +150,20 @@ for nF=1:length(files)
    
          slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
     end
+    % % Create the histogram
+    % figure; % Creates a new figure window
+    % histogram(slow_Waves(:, 4));
+    % xlabel('Peak2Peak Amplitude'); % Label for the x-axis
+    % ylabel('Count'); % Label for the y-axis
+    % title([SubID, ' Resting - After thresholding']); % Set the title of the histogram
+    % format_fig;
+    % % Save the figure
+    % outputDir = '/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Figures/';
+    % filename = sprintf('%s%s_SWhist_rest_afterthreshold.png', outputDir, SubID);  % Construct filename
+    % saveas(gcf, filename);  % Save the figure as a PNG file
+    % close
+
+
     oldBlockNumbers=slow_Waves(:,2);
     uniqueBlocksSW=unique(oldBlockNumbers);
     for nBl=1:length(uniqueBlocksSW)
@@ -130,7 +171,10 @@ for nF=1:length(files)
     end
     slow_Waves(:,end+1)=oldBlockNumbers;
 
-    save([save_path filesep 'prct_DSS_RS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
+    %save([save_path filesep 'prct_DSS_RS_SW_' SubID],'slow_Waves','paramSW','ChanLabels')
+
+    All_slow_Waves_Rest = [All_slow_Waves_Rest; str2num(SubID(6:end))*ones(size(slow_Waves,1),1), slow_Waves];
+
     
     numEpochs = size(EEG.data,3);
 
@@ -238,6 +282,54 @@ for nF=1:length(files)
 end
 
 %%
+Taskpp = unique(All_slow_Waves_Task(:,1));
+TaskTnum = 0;
+for j=1:length(Taskpp)
+    subset = All_slow_Waves_Task(All_slow_Waves_Task(:,1)==Taskpp(j,:),:);
+    TaskTnum = TaskTnum + length(unique(subset(:,3)));
+end
+
+Restpp = unique(All_slow_Waves_Rest(:,1));
+RestTnum = 0;
+for j=1:length(Restpp)
+    subset = All_slow_Waves_Rest(All_slow_Waves_Rest(:,1)==Restpp(j,:),:);
+    RestTnum = RestTnum + length(unique(subset(:,3)));
+end
+
+
+% Creating the figure
+figure;
+bin_edgesT = linspace(min(All_slow_Waves_Task(:,5)), max(All_slow_Waves_Task(:,5)), 100); % define bin edges
+bin_countsT = histcounts(All_slow_Waves_Task(:,5), bin_edgesT); % calculate bin counts
+bin_counts_scaledT = bin_countsT * 1/(20*TaskTnum); % scale the bin counts
+h1=bar(bin_edgesT(1:end-1), bin_counts_scaledT, 'hist'); % plot the histogram
+h1.FaceColor = [0.5 0.0 0.5];  % Purple color, RGB values between 0 and 1
+h1.FaceAlpha = 0.2;            % 20% transparency
+hold on;
+
+bin_edgesR = linspace(min(All_slow_Waves_Rest(:,5)), max(All_slow_Waves_Rest(:,5)), 100); % define bin edges
+bin_countsR = histcounts(All_slow_Waves_Rest(:,5), bin_edgesR); % calculate bin counts
+bin_counts_scaledR = bin_countsR * 1/(30*RestTnum); % scale the bin counts
+h2 =bar(bin_edgesR(1:end-1), bin_counts_scaledR, 'hist'); % plot the histogram
+h2.FaceColor = [1 0.5 0];      % Orange color, RGB values between 0 and 1
+h2.FaceAlpha = 0.2;            % 20% transparency
+
+% Histogram for Task data with a custom RGB color (e.g., a shade of purple)
+%h1 = histogram(All_slow_Waves_Task(:,5), 'Normalization', 'probability'); % 'probability'
+%h2 = histogram(All_slow_Waves_Rest(:,5), 'Normalization', 'probability' );
+
+xlabel('Peak2Peak Amplitude'); % Label for the x-axis
+ylabel('Scaled Count'); % Label for the y-axis
+title('Task vs Rest Slow waves');
+legend('Task', 'Rest');
+hold off; % Release the hold
+format_fig;
+
+
+
+
+
+%%
 figure;
 set(gcf,'Position',[680   371   560   420]);
 for nCh=1:length(myERP_Elec)
@@ -259,7 +351,7 @@ end
 figure;
 simpleTplot(1:19,squeeze(mean(SW_dens_perProbe(:,:,match_str({EEG.chanlocs.labels},'Fz')),3)),0,[1 0.5 0],0,'-',0.5,1,[],1,4);
 hold on; format_fig;
-for k=[10.5 20.5 30.5]
+for k=[10.5]
     line([1 1]*k,ylim,'Color','k','LineStyle','--')
 end
 xlabel('Probes')
@@ -383,6 +475,7 @@ for nCh=1:size(mean_SW_ERP_byElec2,1)
 end
 
 
+%%
 
 
 
