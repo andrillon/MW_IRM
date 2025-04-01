@@ -1,4 +1,4 @@
-%%%%% Preprocessing check
+    %%%%% Preprocessing check
 %%%%% Basic analyses on the preprocessed, filtered and epoch EEG data
 
 %% Init
@@ -111,9 +111,9 @@ for nF=1:length(files)
     %     continue;
     % end
 
-     ROIfront = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_mars_s' SubID(end-2:end) '.mat']); % marsbar  Preprobe20sARV_back_mwmbVSot_spmcon4
+     ROIfront = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_marsfilt_s' SubID(end-2:end) '.mat']); % marsbar  Preprobe20sARV_back_mwmbVSot_spmcon4
      % ROIfrontMP = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_spmcon4filt_s' SubID(end-2:end) '.mat']); % filt
-     ROIback = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_mars_s' SubID(end-2:end) '.mat']); % marsmar
+     ROIback = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_marsfilt_s' SubID(end-2:end) '.mat']); % marsmar
      % ROIbackMP = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_spmcon4filt_s' SubID(end-2:end) '.mat']); % Preprobe5sARV_back_mwmbVSot_mars_s242
 
 
