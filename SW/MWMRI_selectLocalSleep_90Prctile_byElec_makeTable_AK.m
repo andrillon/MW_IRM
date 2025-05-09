@@ -111,9 +111,9 @@ for nF=1:length(files)
     %     continue;
     % end
 
-     ROIfront = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_mars_s' SubID(end-2:end) '.mat']); % marsbar  Preprobe20sARV_back_mwmbVSot_spmcon4
+     ROIfront = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_mars2_s' SubID(end-2:end) '.mat']); % marsbar  Preprobe20sARV_back_mwmbVSot_spmcon4
      % ROIfrontMP = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_spmcon4filt_s' SubID(end-2:end) '.mat']); % filt
-     ROIback = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_mars_s' SubID(end-2:end) '.mat']); % marsmar
+     ROIback = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_mars2_s' SubID(end-2:end) '.mat']); % marsmar
      % ROIbackMP = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_spmcon4filt_s' SubID(end-2:end) '.mat']); % Preprobe5sARV_back_mwmbVSot_mars_s242
 
 
@@ -234,7 +234,7 @@ for nF=1:length(files)
         
     end
 end
-writetable(table_SW,[save_path filesep 'MW_MRI_SW_Behav_PerProbe_ROI_marsbar.txt']);
+%writetable(table_SW,[save_path filesep 'MW_MRI_SW_Behav_PerProbe_ROI_marsbarfiltered.txt']);
 
 
 %%
@@ -500,7 +500,7 @@ newlabels=layout.label(1:end-2);
 
 %table_SW.Block = categorical(table_SW.Block, [1, 2, 3, 4], {'1st', '2nd', '3rd', '4th'}, 'Ordinal',true);
 %table_SW.Block = double(table_SW.Block);
-table_SW.Block = categorical(table_SW.Block);
+%table_SW.Block = categorical(table_SW.Block);
 
 
 
@@ -508,12 +508,12 @@ table_SW.Block = categorical(table_SW.Block);
 
 clear ROI_effect ROI_A_effect
 for nCh=1:length(newlabels)
-    mdl_ROI1_D=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROIbackR~1+SW_density*Block + (1+Block|SubID)','Distribution','Normal');
+    mdl_ROI1_D=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROIback~1+SW_density*Probe + (1+Probe|SubID)','Distribution','Normal');
     ROI_effect(nCh,1)=mdl_ROI1_D.Coefficients.tStat(match_str(mdl_ROI1_D.CoefficientNames,'SW_density')); % SW_density Block Block:SW_density
     ROI_effect(nCh,2)=mdl_ROI1_D.Coefficients.pValue(match_str(mdl_ROI1_D.CoefficientNames,'SW_density')); % Block_2nd Block_2nd:SW_density (Intercept) Block_3rd Block_4th
     fprintf('Electrode %s\n',newlabels{nCh})
 
-    mdl_ROI1_A=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROIbackR~1+SW_amplitude*Block + (1+Block|SubID)','Distribution','Normal');
+    mdl_ROI1_A=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROIback~1+SW_amplitude*Probe + (1+Probe|SubID)','Distribution','Normal');
     ROI_A_effect(nCh,1)=mdl_ROI1_A.Coefficients.tStat(match_str(mdl_ROI1_A.CoefficientNames,'SW_amplitude'));
     ROI_A_effect(nCh,2)=mdl_ROI1_A.Coefficients.pValue(match_str(mdl_ROI1_A.CoefficientNames,'SW_amplitude'));
 

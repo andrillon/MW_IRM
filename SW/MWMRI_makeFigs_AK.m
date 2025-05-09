@@ -111,9 +111,9 @@ for nF=1:length(files)
     %     continue;
     % end
 
-     ROIfront = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_mars_s' SubID(end-2:end) '.mat']); % marsbar  Preprobe20sARV_back_mwmbVSot_spmcon4
+     ROIfront = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_mars2_s' SubID(end-2:end) '.mat']); % marsbar  Preprobe20sARV_back_mwmbVSot_spmcon4
      % ROIfrontMP = importdata([ROIpath 'Preprobe20sARV_front_mwmbVSot_spmcon4filt_s' SubID(end-2:end) '.mat']); % filt
-     ROIback = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_mars_s' SubID(end-2:end) '.mat']); % marsmar
+     ROIback = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_mars2_s' SubID(end-2:end) '.mat']); % marsmar
      % ROIbackMP = importdata([ROIpath 'Preprobe20sARV_back_mwmbVSot_spmcon4filt_s' SubID(end-2:end) '.mat']); % Preprobe5sARV_back_mwmbVSot_mars_s242
 
 
@@ -234,7 +234,7 @@ for nF=1:length(files)
         
     end
 end
-writetable(table_SW,[save_path filesep 'MW_MRI_SW_Behav_PerProbe_ROI_marsbar.txt']);
+%writetable(table_SW,[save_path filesep 'MW_MRI_SW_Behav_PerProbe_ROI_marsbarfiltered.txt']);
 
 
 %%
@@ -343,7 +343,7 @@ lme_fa = fitlme(subsettable_SW, 'SART_FA ~ 1 + Block + SART_MWerror + (1+Block|S
 
 subsettable = subsettable_SW(:,{'SubID','Block','Probe','SART_Miss','SART_FA','SART_HitRT','SART_ON','SART_State','SART_Vig','SART_MWcat','SART_StateError'});
 
-writetable(subsettable,[save_path filesep 'MW_MRI_ProbeOnly.txt']);
+%writetable(subsettable,[save_path filesep 'MW_MRI_ProbeOnly.txt']);
 
 
 % lme_numeric_sl = fitlme(table_SW, 'SW_density ~ NumBlock + (1 + NumBlock|SubID)');
@@ -355,6 +355,172 @@ writetable(subsettable,[save_path filesep 'MW_MRI_ProbeOnly.txt']);
 % comparison_result = compare(lme_numeric, lme_numeric_sl);
 % comparison_result = compare(lme_ordinal, lme_ordinal_sl);
 % disp(comparison_result);
+
+
+
+%% FIGURE 1.
+% Extract the relevant columns: Probe and SART_ON
+probes = subsettable_SW.Probe;
+on_off = subsettable_SW.SART_ON;
+
+% Convert SART_ON to categorical if it's not already
+on_off = categorical(on_off, [0, 1], {'OFF', 'ON'});
+
+% Count occurrences of "ON" and "OFF" for each probe
+summary_table = varfun(@numel, table(probes, on_off), 'InputVariables', 'on_off', 'GroupingVariables', 'probes');
+
+% Calculate the proportions
+total_counts = splitapply(@sum, summary_table.numel_on_off, summary_table.probes);
+on_counts = splitapply(@(x) sum(x == 'ON'), on_off, findgroups(probes));
+off_counts = total_counts - on_counts;
+
+% Transform proportions into percentages
+percent_on = (on_counts ./ total_counts) * 100;
+percent_off = (off_counts ./ total_counts) * 100;
+
+% Ensure that percent_on and percent_off are in a matrix format
+percent_data = [percent_on, percent_off];
+
+% Create the bar plot with custom RGB colors
+figure;
+% Set the size of the figure (width, height in pixels)
+set(gcf, 'Position', [100, 100, 800, 400]);  % [left, bottom, width, height]
+b = bar(categorical(summary_table.probes), percent_data, 'stacked');
+
+% Directly assign colors to each segment
+b(1).FaceColor = [51/255, 34/255, 136/255]; % Color for 'ON' 
+b(2).FaceColor = [68/255, 170/255, 153/255]; % Color for 'OFF' 
+
+c =  [51/255, 34/255, 136/255;...
+      68/255, 170/255, 153/255;...
+      0.55, 0.60, 0.79;...
+      0.90, 0.70, 0.30]; 
+
+% Customize the legend, positioning it below the figure
+legend(b, {'ON', 'OFF'}, 'Location', 'southoutside', 'Orientation', 'horizontal');
+xlabel('Probe');
+ylabel('Percentage (%)');
+title('ON vs OFF Probes');
+
+format_fig;
+
+
+% next
+% Assuming your table is named 'table_SW'
+% Extract the relevant columns: Vigilance ratings (SART_Vig) and SART_ON (ON/OFF)
+vigilance = subsettable_SW.SART_Vig;
+on_off = subsettable_SW.SART_ON;
+
+% Convert SART_ON to categorical if it's not already
+on_off = categorical(on_off, [0, 1], {'OFF', 'ON'});
+
+% Prepare the data for plotting (all vigilance values for ON and OFF)
+vigilance_on = vigilance(on_off == 'ON'); % Vigilance ratings for ON probes
+vigilance_off = vigilance(on_off == 'OFF'); % Vigilance ratings for OFF probes
+
+dataToPlot{1} = vigilance(on_off == 'ON');
+dataToPlot{2} = vigilance(on_off == 'OFF'); 
+
+% Create the rain cloud plot
+figure;
+hold on;
+
+% Violin plot for all vigilance values (ON vs OFF probes)
+h = daviolinplot(dataToPlot(:,1:2), 'groups', on_off(:,1)', ...
+    'color',c,'violinmin',1,'violinmax',4,'scatter',2,'jitter',1, 'scattersize', 40, ...
+    'box',1,'outliers',0,'boxcolors','same','scattercolors','same');
+
+% Title and labels for the figure
+title('Vigilance Ratings by Probe Type');
+ylabel('Vigilance Rating');
+
+% Adjusting the y-axis limits to show only values 1, 2, 3, 4
+ylim([0.5, 4.5]);  % Set y-limits to show values between 1 and 4 (adjust as needed)
+yticks([1, 2, 3, 4]);
+
+% Adjust the x-axis labels to show 'ON' and 'OFF'
+xticklabels({'ON', 'OFF'});  % Label the x-axis ticks as 'ON' and 'OFF'
+
+% Adjust figure appearance
+set(gcf, 'Position', [100, 100, 500, 600]); % Set figure siz
+format_fig;
+
+% fig1c 
+
+% Assuming the table is named 'subsettable_SW'
+
+% Extract relevant columns: RT, Hits, and FAs
+RT = subsettable_SW.SART_HitRT;  % Reaction Time
+miss = subsettable_SW.SART_Miss*100;  % 
+fas = subsettable_SW.SART_FA*100;  % False Alarms
+
+% Extract probe status
+on_off = subsettable_SW.SART_ON;
+
+% Convert SART_ON to categorical if it's not already
+on_off = categorical(on_off, [0, 1], {'OFF', 'ON'});
+
+% Separate RT, Hits, and FAs based on ON and OFF probes
+RT_on = RT(on_off == 'ON');
+RT_off = RT(on_off == 'OFF');
+miss_on = miss(on_off == 'ON');
+miss_off = miss(on_off == 'OFF');
+fas_on = fas(on_off == 'ON');
+fas_off = fas(on_off == 'OFF');
+
+dataToPlot{1} = RT_on;
+dataToPlot{2} = RT_off;
+dataToPlot{3} = miss_on;
+dataToPlot{4} = miss_off; 
+dataToPlot{5} = fas_on;
+dataToPlot{6} = fas_off; 
+
+
+% Create the rain cloud plot
+figure;
+hold on;
+
+% Plot RT comparison between ON and OFF probes
+subplot(1, 3, 1);
+h_RT = daviolinplot(dataToPlot(:,1:2), 'groups', on_off(:,1)',...
+    'color',c,'scatter',2,'jitter',1, ...
+    'box',1,'outliers',0,'boxcolors','same','scattercolors','same');
+
+title('Reaction Times');
+ylabel('RT (sec)');
+xticklabels({'ON', 'OFF'});
+format_fig;
+
+% Plot Hits comparison between ON and OFF probes
+subplot(1, 3, 2);
+h_Hits = daviolinplot(dataToPlot(:,3:4), 'groups', on_off(:,1)',...
+    'color',c,'scatter',2,'jitter',1,'violinmin',0,'jitscale1', 0.8, 'jitscale2',5, ...
+    'box',1,'outliers',0,'boxcolors','same','scattercolors','same');
+title('Misses');
+ylabel('Pecentage of Misses (%)');
+xticklabels({'ON', 'OFF'});
+ylim([0, 75]);
+format_fig;
+
+
+
+% Plot False Alarms comparison between ON and OFF probes
+subplot(1, 3, 3);
+h_FAs = daviolinplot(dataToPlot(:,5:6), 'groups', on_off(:,1)',...
+    'color',c,'scatter',2,'jitter',1, 'violinmin',0,'violinmax',100,'jitscale1', 0.8, 'jitscale2',5, ...
+    'box',1,'outliers',0,'boxcolors','same','scattercolors','same');
+
+title('False Alarms');
+ylabel('Pecentage of False Alarms (%)');
+xticklabels({'ON', 'OFF'});
+ylim([-10, 110]);
+
+% Adjust figure appearance
+set(gcf, 'Position', [100, 100, 1000, 600]); % Set figure size for multiple plots
+format_fig;
+
+
+
 
 
 %% Overall correlation between SW distibution and performance/mindstate  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   FIG 5
@@ -380,17 +546,25 @@ for nCh=1:length(newlabels)
     ON_A_effect(nCh,1)=mdl_ON_A.Coefficients.tStat(match_str(mdl_ON_A.CoefficientNames,'SW_amplitude'));
     ON_A_effect(nCh,2)=mdl_ON_A.Coefficients.pValue(match_str(mdl_ON_A.CoefficientNames,'SW_amplitude'));
 
-    mdl_ON_F=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_frequency+(1+Block|SubID)','Distribution','binomial');
-    ON_F_effect(nCh,1)=mdl_ON_F.Coefficients.tStat(match_str(mdl_ON_F.CoefficientNames,'SW_frequency'));
-    ON_F_effect(nCh,2)=mdl_ON_F.Coefficients.pValue(match_str(mdl_ON_F.CoefficientNames,'SW_frequency'));
-
-    mdl_ON_Do=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_downslope+(1+Block|SubID)','Distribution','binomial');
-    ON_Do_effect(nCh,1)=mdl_ON_Do.Coefficients.tStat(match_str(mdl_ON_Do.CoefficientNames,'SW_downslope'));
-    ON_Do_effect(nCh,2)=mdl_ON_Do.Coefficients.pValue(match_str(mdl_ON_Do.CoefficientNames,'SW_downslope'));
-
-    mdl_ON_U=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_upslope+(1+Block|SubID)','Distribution','binomial');
-    ON_U_effect(nCh,1)=mdl_ON_U.Coefficients.tStat(match_str(mdl_ON_U.CoefficientNames,'SW_upslope'));
-    ON_U_effect(nCh,2)=mdl_ON_U.Coefficients.pValue(match_str(mdl_ON_U.CoefficientNames,'SW_upslope'));
+    % mdl_ON_D=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Vig2~1+Block+SW_density+(1+Block|SubID)','Distribution','binomial');
+    % ON_D_effect(nCh,1)=mdl_ON_D.Coefficients.tStat(match_str(mdl_ON_D.CoefficientNames,'SW_density'));
+    % ON_D_effect(nCh,2)=mdl_ON_D.Coefficients.pValue(match_str(mdl_ON_D.CoefficientNames,'SW_density'));
+    % 
+    % mdl_ON_A=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_Vig2~1+Block+SW_amplitude+(1+Block|SubID)','Distribution','binomial');
+    % ON_A_effect(nCh,1)=mdl_ON_A.Coefficients.tStat(match_str(mdl_ON_A.CoefficientNames,'SW_amplitude'));
+    % ON_A_effect(nCh,2)=mdl_ON_A.Coefficients.pValue(match_str(mdl_ON_A.CoefficientNames,'SW_amplitude'));
+    % 
+    % mdl_ON_F=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_frequency+(1+Block|SubID)','Distribution','binomial');
+    % ON_F_effect(nCh,1)=mdl_ON_F.Coefficients.tStat(match_str(mdl_ON_F.CoefficientNames,'SW_frequency'));
+    % ON_F_effect(nCh,2)=mdl_ON_F.Coefficients.pValue(match_str(mdl_ON_F.CoefficientNames,'SW_frequency'));
+    % 
+    % mdl_ON_Do=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_downslope+(1+Block|SubID)','Distribution','binomial');
+    % ON_Do_effect(nCh,1)=mdl_ON_Do.Coefficients.tStat(match_str(mdl_ON_Do.CoefficientNames,'SW_downslope'));
+    % ON_Do_effect(nCh,2)=mdl_ON_Do.Coefficients.pValue(match_str(mdl_ON_Do.CoefficientNames,'SW_downslope'));
+    % 
+    % mdl_ON_U=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'SART_ON~1+Block+SW_upslope+(1+Block|SubID)','Distribution','binomial');
+    % ON_U_effect(nCh,1)=mdl_ON_U.Coefficients.tStat(match_str(mdl_ON_U.CoefficientNames,'SW_upslope'));
+    % ON_U_effect(nCh,2)=mdl_ON_U.Coefficients.pValue(match_str(mdl_ON_U.CoefficientNames,'SW_upslope'));
     fprintf('Electrode %s\n',newlabels{nCh})
 
 end
@@ -438,10 +612,13 @@ end
 
 
 %% Figure
+% 
+% effect = [ON_D_effect(:,1), ON_A_effect(:,1), ON_F_effect(:,1), ON_Do_effect(:,1), ON_U_effect(:,1)];
+% all_pV = [ON_D_effect(:,2); ON_A_effect(:,2); ON_F_effect(:,2); ON_Do_effect(:,2); ON_U_effect(:,2)];
 
-effect = [ON_D_effect(:,1), ON_A_effect(:,1), ON_F_effect(:,1), ON_Do_effect(:,1), ON_U_effect(:,1)];
-all_pV = [ON_D_effect(:,2); ON_A_effect(:,2); ON_F_effect(:,2); ON_Do_effect(:,2); ON_U_effect(:,2)];
-%all_pV = [ON_D_effect(:,2)];
+effect = [ON_D_effect(:,1), ON_A_effect(:,1)];
+all_pV = [ON_D_effect(:,2); ON_A_effect(:,2)];
+
 
 % effect = [ROI1_effect(:,1), ROI1_effect(:,3), ROI1_effect(:,5)];
 % all_pV = [ROI1_effect(:,2), ROI1_effect(:,4), ROI1_effect(:,6)];
@@ -449,58 +626,89 @@ FDR_Thr=0.05;%fdr(all_pV,0.05);
 cmap2=cbrewer('div','RdBu',64); cmap2=flipud(cmap2);
 minmax = ceil(max(max(abs(effect))));
 
+% 
+% figure;
+% set(gcf, 'Position', [100, 100, 800, 600]); % Set the figure position and size
+% simpleTopoPlot_ft(ON_D_effect(:,1), layout,'on',[],0,1);
+% ft_plot_lay_me(layout, 'chanindx', find(ON_D_effect(:,2)<0.05), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+% %ft_plot_lay_me(layout, 'chanindx', find(abs(ON_D_effect(:,1))>1.7109), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+% colorbar;
+% colormap(cmap2);
+% caxis([-1 1]*5)
+% title('OFF vs ON Density block intercept', 'FontSize', 16)
 
+% mind-state
 figure;
 set(gcf, 'Position', [100, 100, 800, 600]); % Set the figure position and size
-simpleTopoPlot_ft(ON_D_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(ON_D_effect(:,2)<0.05), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
-%ft_plot_lay_me(layout, 'chanindx', find(abs(ON_D_effect(:,1))>1.7109), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
-colorbar;
-colormap(cmap2);
-caxis([-1 1]*5)
-title('OFF vs ON Density block intercept', 'FontSize', 16)
-
-%
-figure;
-set(gcf, 'Position', [100, 100, 800, 600]); % Set the figure position and size
-subplot(2,2,1)
+subplot(1,2,1)
 simpleTopoPlot_ft(ON_D_effect(:,1), layout,'on',[],0,1);
 ft_plot_lay_me(layout, 'chanindx', find(ON_D_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
 colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('OFF vs ON Density', 'FontSize', 16)
+title({'OFF vs ON Mindstate ', 'Density'});
+format_fig;
 
-subplot(2,2,2);
+
+subplot(1,2,2);
 simpleTopoPlot_ft(ON_A_effect(:,1), layout,'on',[],0,1);
 ft_plot_lay_me(layout, 'chanindx', find(ON_A_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
 colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('OFF vs ON Amplitude', 'FontSize', 16)
+title({'OFF vs ON Mindstate ', 'Amplitude'});
+format_fig;
 
-subplot(2,2,3);
-simpleTopoPlot_ft(ON_Do_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(ON_Do_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+
+
+% vig
+figure;
+set(gcf, 'Position', [100, 100, 800, 600]); % Set the figure position and size
+subplot(1,2,1)
+simpleTopoPlot_ft(ON_D_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ON_D_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
 colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('OFF vs ON Downslope', 'FontSize', 16)
+title({'Low vs High Vigilance', 'Density'});
+format_fig;
 
-subplot(2,2,4);
-simpleTopoPlot_ft(ON_U_effect(:,1), layout,'on',[],0,1);
-ft_plot_lay_me(layout, 'chanindx', find(ON_U_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+
+subplot(1,2,2);
+simpleTopoPlot_ft(ON_A_effect(:,1), layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(ON_A_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
 colorbar;
 colormap(cmap2);
 caxis([-1 1]*5)
-title('OFF vs ON Upslope', 'FontSize', 16)
+title({'Low vs High Vigilance', 'Amplitude'});
+format_fig;
+
+
+
+
+
+% subplot(2,2,3);
+% simpleTopoPlot_ft(ON_Do_effect(:,1), layout,'on',[],0,1);
+% ft_plot_lay_me(layout, 'chanindx', find(ON_Do_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+% colorbar;
+% colormap(cmap2);
+% caxis([-1 1]*5)
+% title('OFF vs ON Downslope', 'FontSize', 16)
+% 
+% subplot(2,2,4);
+% simpleTopoPlot_ft(ON_U_effect(:,1), layout,'on',[],0,1);
+% ft_plot_lay_me(layout, 'chanindx', find(ON_U_effect(:,2)<FDR_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','yes')
+% colorbar;
+% colormap(cmap2);
+% caxis([-1 1]*5)
+% title('OFF vs ON Upslope', 'FontSize', 16)
 
 %% ROI
 newlabels=layout.label(1:end-2);
 
 %table_SW.Block = categorical(table_SW.Block, [1, 2, 3, 4], {'1st', '2nd', '3rd', '4th'}, 'Ordinal',true);
 %table_SW.Block = double(table_SW.Block);
-table_SW.Block = categorical(table_SW.Block);
+%table_SW.Block = categorical(table_SW.Block);
 
 
 
@@ -508,12 +716,12 @@ table_SW.Block = categorical(table_SW.Block);
 
 clear ROI_effect ROI_A_effect
 for nCh=1:length(newlabels)
-    mdl_ROI1_D=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROIbackR~1+SW_density*Block + (1+Block|SubID)','Distribution','Normal');
+    mdl_ROI1_D=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROIback~1+SW_density*Probe + (1+Probe|SubID)','Distribution','Normal');
     ROI_effect(nCh,1)=mdl_ROI1_D.Coefficients.tStat(match_str(mdl_ROI1_D.CoefficientNames,'SW_density')); % SW_density Block Block:SW_density
     ROI_effect(nCh,2)=mdl_ROI1_D.Coefficients.pValue(match_str(mdl_ROI1_D.CoefficientNames,'SW_density')); % Block_2nd Block_2nd:SW_density (Intercept) Block_3rd Block_4th
     fprintf('Electrode %s\n',newlabels{nCh})
 
-    mdl_ROI1_A=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROIbackR~1+SW_amplitude*Block + (1+Block|SubID)','Distribution','Normal');
+    mdl_ROI1_A=fitglme(table_SW(table_SW.Elec==newlabels{nCh},:),'ROIback~1+SW_amplitude*Probe + (1+Probe|SubID)','Distribution','Normal');
     ROI_A_effect(nCh,1)=mdl_ROI1_A.Coefficients.tStat(match_str(mdl_ROI1_A.CoefficientNames,'SW_amplitude'));
     ROI_A_effect(nCh,2)=mdl_ROI1_A.Coefficients.pValue(match_str(mdl_ROI1_A.CoefficientNames,'SW_amplitude'));
 
