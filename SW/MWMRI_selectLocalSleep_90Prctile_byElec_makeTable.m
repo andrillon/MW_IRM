@@ -91,7 +91,7 @@ for nF=1:length(files)
 %         thr_Wave(nE)=prctile(thisE_Waves(:,paramSW.AmpCriterionIdx),paramSW.prticle_Thr);
 %         slow_Waves=[slow_Waves ; thisE_Waves(temp_p2p>thr_Wave(nE),:)];
 %     end
-    load([save_path filesep 'prct_25s_DSS_SW_' SubID]);%,'slow_Waves','paramSW','ChanLabels')
+    load([save_path filesep 'prct_DSS_SW_' SubID]);%,'slow_Waves','paramSW','ChanLabels')
     
     for nP=unique(slow_Waves(:,2))'
         slow_Waves_perE=[];
@@ -142,7 +142,7 @@ for nF=1:length(files)
         
     end
 end
-writetable(table_SW,[save_path filesep 'MW_MRI_25sec_SW_Behav_PerProbe.txt']);
+% writetable(table_SW,[save_path filesep 'MW_MRI_25sec_SW_Behav_PerProbe.txt']);
 %%
 addpath((path_fieldtrip))
 ft_defaults;
