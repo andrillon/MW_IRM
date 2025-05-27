@@ -93,6 +93,9 @@ all_table_behav_SW.Condition=categorical(all_table_behav_SW.Condition);
 all_table_behav_SW.Condition(all_table_behav_SW.Condition=='0')='Go';
 all_table_behav_SW.Condition(all_table_behav_SW.Condition=='1')='NoGo';
 all_table_behav_SW.Condition=removecats(all_table_behav_SW.Condition);
+
+all_table_behav_SW.OFF=all_table_behav_SW.MS~='ON';
+
 writetable(all_table_behav_SW,[save_path filesep 'MW_MRI_SW_Behav_PerTrial.txt']);
 
 %%
@@ -183,3 +186,136 @@ colormap(cmap2);
 caxis([-1 1]*5)
 title('Hit RT', 'FontSize', 16)
 
+%%
+topo_SW_ON_Corr=[];
+topo_SW_OFF_Corr=[];
+topo_SW_ON_Err=[];
+topo_SW_OFF_Err=[];
+
+cfg = [];
+cfg.layout = 'elec1005.lay';
+cfg.center      = 'yes';
+cfg.channel = ChanLabels(~ismember(ChanLabels,{'TP9','TP10'}));
+layout=ft_prepare_layout(cfg);
+% layout.label(match_str(layout.label,{'TP9','TP10'}))=[];
+correspCh=[];
+for nCh=1:length(layout.label)-2
+    correspCh(nCh)=match_str(ChanLabels,layout.label{nCh});
+end
+
+topo_effect_tval=[];
+topo_effect_pval=[];
+for nCh=1:length(newlabels)
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS == 'ON');
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS == 'ON');
+    topo_SW_ON(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS ~= 'ON');
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS ~= 'ON');
+    topo_SW_OFF(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.Error==0);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.Error==0);
+    topo_SW_Corr(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.Error==1);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.Error==1);
+    topo_SW_Err(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS == 'ON' & all_table_behav_SW.Error==0);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS == 'ON' & all_table_behav_SW.Error==0);
+    topo_SW_ON_Corr(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS == 'ON' & all_table_behav_SW.Error==1);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS == 'ON' & all_table_behav_SW.Error==1);
+    topo_SW_ON_Err(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS ~= 'ON' & all_table_behav_SW.Error==0);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS ~= 'ON' & all_table_behav_SW.Error==0);
+    topo_SW_OFF_Corr(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS ~= 'ON' & all_table_behav_SW.Error==1);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS ~= 'ON' & all_table_behav_SW.Error==1);
+    topo_SW_OFF_Err(nCh,:) = grpstats(val,subjs);
+
+    mdl=fitglme(all_table_behav_SW,sprintf('%s~1+Error*OFF+(1|SubID)',newlabels{nCh}),'Distribution','Binomial');
+
+    topo_effect_tval(1,nCh)=mdl.Coefficients.tStat(match_str(mdl.CoefficientNames,'Error'));
+    topo_effect_tval(2,nCh)=mdl.Coefficients.tStat(match_str(mdl.CoefficientNames,'OFF_1'));
+    topo_effect_tval(3,nCh)=mdl.Coefficients.tStat(match_str(mdl.CoefficientNames,'Error:OFF_1'));
+
+    topo_effect_pval(1,nCh)=mdl.Coefficients.pValue(match_str(mdl.CoefficientNames,'Error'));
+    topo_effect_pval(2,nCh)=mdl.Coefficients.pValue(match_str(mdl.CoefficientNames,'OFF_1'));
+    topo_effect_pval(3,nCh)=mdl.Coefficients.pValue(match_str(mdl.CoefficientNames,'Error:OFF_1'));
+
+end
+%%
+figure;
+minmax=[min([nanmean(topo_SW_ON,2) ; nanmean(topo_SW_OFF,2) ; nanmean(topo_SW_Corr,2) ;nanmean(topo_SW_Err,2)]) ...
+    max([nanmean(topo_SW_ON,2) ; nanmean(topo_SW_OFF,2) ; nanmean(topo_SW_Corr,2) ;nanmean(topo_SW_Err,2)])];
+subplot(2,2,1)
+simpleTopoPlot_ft(nanmean(topo_SW_ON,2), layout,'on',[],0,1);
+title('ON', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,2)
+simpleTopoPlot_ft(nanmean(topo_SW_OFF,2), layout,'on',[],0,1);
+title('OFF', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,3)
+simpleTopoPlot_ft(nanmean(topo_SW_Corr,2), layout,'on',[],0,1);
+title('Corr', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,4)
+simpleTopoPlot_ft(nanmean(topo_SW_Err,2), layout,'on',[],0,1);
+title('Err', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+
+minmax=[min([nanmean(topo_SW_ON_Corr,2) ; nanmean(topo_SW_ON_Err,2) ; nanmean(topo_SW_OFF_Corr,2) ;nanmean(topo_SW_OFF_Err,2)]) ...
+    max([nanmean(topo_SW_ON_Corr,2) ; nanmean(topo_SW_ON_Err,2) ; nanmean(topo_SW_OFF_Corr,2) ;nanmean(topo_SW_OFF_Err,2)])];
+figure;
+subplot(2,2,1)
+simpleTopoPlot_ft(nanmean(topo_SW_ON_Corr,2), layout,'on',[],0,1);
+title('ON Corr', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,2)
+simpleTopoPlot_ft(nanmean(topo_SW_ON_Err,2), layout,'on',[],0,1);
+title('ON Err', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,3)
+simpleTopoPlot_ft(nanmean(topo_SW_OFF_Corr,2), layout,'on',[],0,1);
+title('OFF Corr', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,4)
+simpleTopoPlot_ft(nanmean(topo_SW_OFF_Err,2), layout,'on',[],0,1);
+title('OFF Err', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+%%
+minmax=[max(abs([topo_effect_tval(1,:) topo_effect_tval(2,:) topo_effect_tval(3,:)]))];
+fdr_Thr=fdr(reshape(topo_effect_pval,1,numel(topo_effect_pval)),0.05);
+figure('Position',[ 440   611   560   186]);
+subplot(1,3,1)
+simpleTopoPlot_ft(topo_effect_tval(1,:)', layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(topo_effect_pval(1,:)<fdr_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+title('OFF', 'FontSize', 16)
+caxis([-1 1]*minmax)
+
+subplot(1,3,2)
+simpleTopoPlot_ft(topo_effect_tval(2,:)', layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(topo_effect_pval(2,:)<fdr_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+title('Err', 'FontSize', 16)
+caxis([-1 1]*minmax)
+
+subplot(1,3,3)
+simpleTopoPlot_ft(topo_effect_tval(3,:)', layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(topo_effect_pval(3,:)<fdr_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+title('OFF:Err', 'FontSize', 16)
+caxis([-1 1]*minmax)
+colorbar('Position',[0.9 0.6 0.02 0.2],'FontSize',16); %,'Title','t-val');

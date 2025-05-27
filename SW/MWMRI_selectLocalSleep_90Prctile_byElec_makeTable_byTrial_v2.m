@@ -1,0 +1,270 @@
+%%%%% Preprocessing check
+%%%%% Basic analyses on the preprocessed, filtered and epoch EEG data
+
+%% Init
+clear all;
+close all;
+
+run ../localdef.m
+
+% adding relevant toolboxes to the path
+addpath(genpath(lscpTools_path))
+addpath(genpath(exgauss_path))
+addpath(genpath(FMINSEARCHBND_path))
+% select relevant files, here baseline blocks
+files=dir([data_path filesep filesep 'MWMRI*clean5.set']);
+
+
+%%
+table_SW=array2table(zeros(0,15),'VariableNames',{'SubID','Block','Probe','Elec','SW_density','SW_amplitude','SW_frequency','SW_downslope','SW_upslope','SART_Miss','SART_FA','SART_HitRT','SART_ON','SART_State','SART_Vig'});
+table_SW.SubID=categorical(table_SW.SubID);
+table_SW.Elec=categorical(table_SW.Elec);
+table_SW.SART_State=categorical(table_SW.SART_State);
+
+States={'ON','MW','MB','DK'};
+%% loop across trials for baseline blocks
+nFc=0;
+all_SW_probes=[];
+window_before_probes=20; % in seconds
+all_table_behav_SW=[];
+for nF=1:length(files)
+    % load file with EEGlab
+    fprintf('... file: %s\n',files(nF).name)
+
+    SubID=files(nF).name;
+    sep=findstr(SubID,'clean5.set');
+
+    if isempty(sep)
+        SubID=SubID(1:end-9);
+    else
+        SubID=SubID(1:sep(1)-1);
+    end
+    if exist([save_path filesep 'DSS_allSW_' SubID '.mat'])==0
+        continue;
+    end
+    % load behaviour
+    file_behav=dir([data_path filesep '..' filesep '..' filesep 'Behav' filesep 'wanderIM_behavres_s' SubID(6:end) '*.mat']);
+    if ~isempty(file_behav)
+        load([file_behav.folder filesep file_behav.name])
+    else
+        continue;
+    end
+
+    nFc=nFc+1;
+    if nFc==1
+        addpath(genpath(path_eeglab));
+        EEG = pop_loadset( 'filename',[files(nF).folder filesep files(nF).name]);
+        rmpath(genpath(path_eeglab));
+    end
+
+    Fs=500;
+  load([save_path filesep 'prct_DSS_SW_' SubID])
+
+    table_behav_SW=array2table(zeros(0,10+length(ChanLabels)),'VariableNames',[{'Block','Probe','Trial','Condition','DistToProbe','RT','FA','Miss','MS','Vigilance'},ChanLabels]);
+    for nP=unique(slow_Waves(:,2))'
+        temp_test_res=test_res(test_res(:,1)==probe_res(nP,5) & test_res(:,4)<=probe_res(nP,7),:);
+        temp_behav_SW=[temp_test_res(:,1) nP*ones(size(temp_test_res,1),1) temp_test_res(:,4) temp_test_res(:,5)==3 temp_test_res(:,8)-probe_res(nP,3) temp_test_res(:,11)-temp_test_res(:,8) 1-temp_test_res(:,12:13) zeros(size(temp_test_res,1),2)];
+        temp_behav_SW(temp_behav_SW(:,5)<-window_before_probes,:)=[];
+
+        temp_SW=slow_Waves(slow_Waves(:,2)==nP,:);
+        onset_Waves_FromProbes=temp_SW(:,5)/Fs+EEG.times(1)/1000;
+        all_ElecFlags=nan(size(temp_behav_SW,1)-1,length(ChanLabels));
+        for nT=1:size(temp_behav_SW,1)-1
+            these_SW=temp_SW(onset_Waves_FromProbes>temp_behav_SW(nT,5) & onset_Waves_FromProbes<temp_behav_SW(nT+1,5),:);
+            ElecFlags=hist(these_SW(:,3),1:length(ChanLabels));
+            all_ElecFlags(nT,:)=ElecFlags>0;
+        end
+        temp_table_behav_SW=array2table([temp_behav_SW(1:size(temp_behav_SW,1)-1,:) all_ElecFlags],'VariableNames',[{'Block','Probe','Trial','Condition','DistToProbe','RT','FA','Miss','MS','Vigilance'},ChanLabels]);
+        temp_table_behav_SW.MS=probe_res(nP,17)*ones(size(temp_table_behav_SW,1),1);
+        temp_table_behav_SW.Vigilance=probe_res(nP,19)*ones(size(temp_table_behav_SW,1),1);
+        table_behav_SW=[table_behav_SW ; temp_table_behav_SW];
+    end
+    table_behav_SW.SubID=repmat({SubID},size(table_behav_SW,1),1);
+    all_table_behav_SW=[all_table_behav_SW ; table_behav_SW];
+end
+all_table_behav_SW.SubID=categorical(all_table_behav_SW.SubID);
+all_table_behav_SW.MS=categorical(all_table_behav_SW.MS);
+all_table_behav_SW.MS(all_table_behav_SW.MS=='1')='ON';
+all_table_behav_SW.MS(all_table_behav_SW.MS=='2')='MW';
+all_table_behav_SW.MS(all_table_behav_SW.MS=='3')='MB';
+all_table_behav_SW.MS(all_table_behav_SW.MS=='4')='DK';
+all_table_behav_SW.MS=removecats(all_table_behav_SW.MS);
+all_table_behav_SW.Condition=categorical(all_table_behav_SW.Condition);
+all_table_behav_SW.Condition(all_table_behav_SW.Condition=='0')='Go';
+all_table_behav_SW.Condition(all_table_behav_SW.Condition=='1')='NoGo';
+all_table_behav_SW.Condition=removecats(all_table_behav_SW.Condition);
+
+all_table_behav_SW.OFF=all_table_behav_SW.MS~='ON';
+
+
+all_table_behav_SW.Error=nansum([all_table_behav_SW.FA all_table_behav_SW.Miss],2);
+
+all_table_behav_SW.ONcorr_vs_OFFerr=nan(size(all_table_behav_SW,1),1);
+all_table_behav_SW.ONcorr_vs_OFFerr(all_table_behav_SW.MS=='ON' & all_table_behav_SW.Error==0)=1;
+all_table_behav_SW.ONcorr_vs_OFFerr(all_table_behav_SW.MS~='ON' & all_table_behav_SW.Error==1)=0;
+
+% all_table_behav_SW(all_table_behav_SW.DistToProbe<-11,:)=[];
+writetable(all_table_behav_SW,[save_path filesep 'MW_MRI_SW_Behav_PerTrial.txt']);
+
+%%
+topo_SW_ON_Corr=[];
+topo_SW_OFF_Corr=[];
+topo_SW_ON_Err=[];
+topo_SW_OFF_Err=[];
+
+cfg = [];
+cfg.layout = 'elec1005.lay';
+cfg.center      = 'yes';
+cfg.channel = ChanLabels(~ismember(ChanLabels,{'TP9','TP10'}));
+layout=ft_prepare_layout(cfg);
+% layout.label(match_str(layout.label,{'TP9','TP10'}))=[];
+correspCh=[];
+for nCh=1:length(layout.label)-2
+    correspCh(nCh)=match_str(ChanLabels,layout.label{nCh});
+end
+newlabels=layout.label(1:end-2);
+
+topo_effect_tval=[];
+topo_effect_pval=[];
+for nCh=1:length(newlabels)
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS == 'ON');
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS == 'ON');
+    topo_SW_ON(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS ~= 'ON');
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS ~= 'ON');
+    topo_SW_OFF(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.Error==0);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.Error==0);
+    topo_SW_Corr(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.Error==1);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.Error==1);
+    topo_SW_Err(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS == 'ON' & all_table_behav_SW.Error==0);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS == 'ON' & all_table_behav_SW.Error==0);
+    topo_SW_ON_Corr(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS == 'ON' & all_table_behav_SW.Error==1);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS == 'ON' & all_table_behav_SW.Error==1);
+    topo_SW_ON_Err(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS ~= 'ON' & all_table_behav_SW.Error==0);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS ~= 'ON' & all_table_behav_SW.Error==0);
+    topo_SW_OFF_Corr(nCh,:) = grpstats(val,subjs);
+
+    val=all_table_behav_SW.(newlabels{nCh})(all_table_behav_SW.MS ~= 'ON' & all_table_behav_SW.Error==1);
+    subjs=all_table_behav_SW.SubID(all_table_behav_SW.MS ~= 'ON' & all_table_behav_SW.Error==1);
+    topo_SW_OFF_Err(nCh,:) = grpstats(val,subjs);
+
+    mdl=fitglme(all_table_behav_SW,sprintf('%s~1+Error*OFF+(1|SubID)',newlabels{nCh}),'Distribution','Binomial');
+
+    topo_effect_tval(1,nCh)=mdl.Coefficients.tStat(match_str(mdl.CoefficientNames,'Error'));
+    topo_effect_tval(2,nCh)=mdl.Coefficients.tStat(match_str(mdl.CoefficientNames,'OFF_1'));
+    topo_effect_tval(3,nCh)=mdl.Coefficients.tStat(match_str(mdl.CoefficientNames,'OFF_1:Error'));
+
+    topo_effect_pval(1,nCh)=mdl.Coefficients.pValue(match_str(mdl.CoefficientNames,'Error'));
+    topo_effect_pval(2,nCh)=mdl.Coefficients.pValue(match_str(mdl.CoefficientNames,'OFF_1'));
+    topo_effect_pval(3,nCh)=mdl.Coefficients.pValue(match_str(mdl.CoefficientNames,'OFF_1:Error'));
+
+    mdl=fitglme(all_table_behav_SW,sprintf('%s~1+ONcorr_vs_OFFerr+(1|SubID)',newlabels{nCh}),'Distribution','Binomial');
+topo_effect_tval2(1,nCh)=mdl.Coefficients.tStat(match_str(mdl.CoefficientNames,'ONcorr_vs_OFFerr'));
+topo_effect_pval2(1,nCh)=mdl.Coefficients.pValue(match_str(mdl.CoefficientNames,'ONcorr_vs_OFFerr'));
+end
+%%
+figure;
+minmax=[min([nanmean(topo_SW_ON,2) ; nanmean(topo_SW_OFF,2) ; nanmean(topo_SW_Corr,2) ;nanmean(topo_SW_Err,2)]) ...
+    max([nanmean(topo_SW_ON,2) ; nanmean(topo_SW_OFF,2) ; nanmean(topo_SW_Corr,2) ;nanmean(topo_SW_Err,2)])];
+subplot(2,2,1)
+simpleTopoPlot_ft(nanmean(topo_SW_ON,2), layout,'on',[],0,1);
+title('ON', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,2)
+simpleTopoPlot_ft(nanmean(topo_SW_OFF,2), layout,'on',[],0,1);
+title('OFF', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,3)
+simpleTopoPlot_ft(nanmean(topo_SW_Corr,2), layout,'on',[],0,1);
+title('Corr', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,4)
+simpleTopoPlot_ft(nanmean(topo_SW_Err,2), layout,'on',[],0,1);
+title('Err', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+
+minmax=[min([nanmean(topo_SW_ON_Corr,2) ; nanmean(topo_SW_ON_Err,2) ; nanmean(topo_SW_OFF_Corr,2) ;nanmean(topo_SW_OFF_Err,2)]) ...
+    max([nanmean(topo_SW_ON_Corr,2) ; nanmean(topo_SW_ON_Err,2) ; nanmean(topo_SW_OFF_Corr,2) ;nanmean(topo_SW_OFF_Err,2)])];
+figure;
+subplot(2,2,1)
+simpleTopoPlot_ft(nanmean(topo_SW_ON_Corr,2), layout,'on',[],0,1);
+title('ON Corr', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,2)
+simpleTopoPlot_ft(nanmean(topo_SW_ON_Err,2), layout,'on',[],0,1);
+title('ON Err', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,3)
+simpleTopoPlot_ft(nanmean(topo_SW_OFF_Corr,2), layout,'on',[],0,1);
+title('OFF Corr', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(2,2,4)
+simpleTopoPlot_ft(nanmean(topo_SW_OFF_Err,2), layout,'on',[],0,1);
+title('OFF Err', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+minmax=[min([nanmean(topo_SW_ON_Corr,2) ; nanmean(topo_SW_ON_Err,2) ; nanmean(topo_SW_OFF_Corr,2) ;nanmean(topo_SW_OFF_Err,2)]) ...
+    max([nanmean(topo_SW_ON_Corr,2) ; nanmean(topo_SW_ON_Err,2) ; nanmean(topo_SW_OFF_Corr,2) ;nanmean(topo_SW_OFF_Err,2)])];
+
+figure('Position',[ 440   611   560   186]);
+minmax=[min([nanmean(topo_SW_ON_Corr,2) ; nanmean(topo_SW_OFF_Err,2)]) ...
+    max([nanmean(topo_SW_ON_Corr,2) ; nanmean(topo_SW_OFF_Err,2)])];
+subplot(1,3,1)
+simpleTopoPlot_ft(nanmean(topo_SW_ON_Corr,2), layout,'on',[],0,1);
+title('ON Corr', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(1,3,2)
+simpleTopoPlot_ft(nanmean(topo_SW_OFF_Err,2), layout,'on',[],0,1);
+title('OFF Err', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(1,3,3)
+minmax=[max(abs(topo_effect_tval2))];
+simpleTopoPlot_ft(-1*topo_effect_tval2, layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(topo_effect_pval2<fdr(topo_effect_pval2,0.05)), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+title('OFF Err vs ON Corr', 'FontSize', 16)
+colorbar; caxis([-1 1]*minmax)
+
+
+
+%%
+minmax=[max(abs([topo_effect_tval(1,:) topo_effect_tval(2,:) topo_effect_tval(3,:)]))];
+fdr_Thr=fdr(reshape(topo_effect_pval,1,numel(topo_effect_pval)),0.05);
+figure('Position',[ 440   611   560   186]);
+subplot(1,3,1)
+simpleTopoPlot_ft(topo_effect_tval(1,:)', layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(topo_effect_pval(1,:)<fdr_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+title('Error', 'FontSize', 16)
+caxis([-1 1]*minmax)
+
+subplot(1,3,2)
+simpleTopoPlot_ft(topo_effect_tval(2,:)', layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(topo_effect_pval(2,:)<fdr_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+title('OFF', 'FontSize', 16)
+caxis([-1 1]*minmax)
+
+subplot(1,3,3)
+simpleTopoPlot_ft(topo_effect_tval(3,:)', layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(topo_effect_pval(3,:)<fdr_Thr), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+title('OFF:Err', 'FontSize', 16)
+caxis([-1 1]*minmax)
+colorbar('Position',[0.9 0.6 0.02 0.2],'FontSize',16); %,'Title','t-val');
