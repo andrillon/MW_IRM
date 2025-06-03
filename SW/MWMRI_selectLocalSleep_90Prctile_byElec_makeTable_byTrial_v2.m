@@ -170,8 +170,17 @@ for nCh=1:length(newlabels)
     topo_effect_pval(3,nCh)=mdl.Coefficients.pValue(match_str(mdl.CoefficientNames,'OFF_1:Error'));
 
     mdl=fitglme(all_table_behav_SW,sprintf('%s~1+ONcorr_vs_OFFerr+(1|SubID)',newlabels{nCh}),'Distribution','Binomial');
-topo_effect_tval2(1,nCh)=mdl.Coefficients.tStat(match_str(mdl.CoefficientNames,'ONcorr_vs_OFFerr'));
-topo_effect_pval2(1,nCh)=mdl.Coefficients.pValue(match_str(mdl.CoefficientNames,'ONcorr_vs_OFFerr'));
+    topo_effect_tval2(1,nCh)=mdl.Coefficients.tStat(match_str(mdl.CoefficientNames,'ONcorr_vs_OFFerr'));
+    topo_effect_pval2(1,nCh)=mdl.Coefficients.pValue(match_str(mdl.CoefficientNames,'ONcorr_vs_OFFerr'));
+
+    mdl_Error=fitglme(all_table_behav_SW(all_table_behav_SW.Error==1,:),sprintf('%s~1+OFF+(1|SubID)',newlabels{nCh}),'Distribution','Binomial');
+    mdl_NoError=fitglme(all_table_behav_SW(all_table_behav_SW.Error==0,:),sprintf('%s~1+OFF+(1|SubID)',newlabels{nCh}),'Distribution','Binomial');
+    topo_effect_Error_tval(1,nCh)=mdl_Error.Coefficients.tStat(match_str(mdl_Error.CoefficientNames,'OFF_1'));
+    topo_effect_Error_pval(1,nCh)=mdl_Error.Coefficients.pValue(match_str(mdl_Error.CoefficientNames,'OFF_1'));
+
+    topo_effect_NoError_tval(1,nCh)=mdl_NoError.Coefficients.tStat(match_str(mdl_Error.CoefficientNames,'OFF_1'));
+    topo_effect_NoError_pval(1,nCh)=mdl_NoError.Coefficients.pValue(match_str(mdl_Error.CoefficientNames,'OFF_1'));
+
 end
 %%
 figure;
@@ -244,6 +253,19 @@ ft_plot_lay_me(layout, 'chanindx', find(topo_effect_pval2<fdr(topo_effect_pval2,
 title('OFF Err vs ON Corr', 'FontSize', 16)
 colorbar; caxis([-1 1]*minmax)
 
+figure('Position',[ 440   611   560   186]);
+minmax=[-1 1]*max(abs([topo_effect_NoError_tval topo_effect_Error_tval]));
+subplot(1,2,1)
+simpleTopoPlot_ft(topo_effect_NoError_tval, layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(topo_effect_NoError_pval<fdr([topo_effect_NoError_pval topo_effect_Error_pval],0.05)), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+title('OFF vs ON - No error', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
+
+subplot(1,2,2)
+simpleTopoPlot_ft(topo_effect_Error_tval, layout,'on',[],0,1);
+ft_plot_lay_me(layout, 'chanindx', find(topo_effect_Error_pval<fdr([topo_effect_NoError_pval topo_effect_Error_pval],0.05)), 'pointsymbol','o','pointcolor','k','pointsize',36,'box','no','label','no')
+title('OFF vs ON - Error', 'FontSize', 16)
+colorbar; caxis([minmax(1) minmax(2)])
 
 
 %%
