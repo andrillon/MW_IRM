@@ -1,4 +1,4 @@
-%%%%% Preprocessing check
+spm%%%%% Preprocessing check
 %%%%% Basic analyses on the preprocessed, filtered and epoch EEG data
 
 %% Init

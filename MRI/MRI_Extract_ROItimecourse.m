@@ -9,22 +9,22 @@
 %%
 
 % TimeCourseDataset_ns = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/b*_timecourse_n*.mat'); % fr*_timecourse_s*.mat 
-TimeCourseDataset = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/b*_timecourse_s*.mat'); % fr*_timecourse_s*.mat 
+%TimeCourseDataset = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/precuneous_cl*_timecourse_s*.mat'); % fr*_timecourse_s*.mat 
 
 % TimeCourseDataset = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/ot*.mat');
 % TimeCourseDataset = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Old/rffa_timecourse_adjunsted*.mat');
 % TimeCourseDataset = TimeCourseDataset([1:25],:);
 % 
-% TimeCourseDataset_B1 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_f*mp*_1.mat'); % VOI_f*whitefilt*_1 mpcorrected
-% TimeCourseDataset_B2 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_f*mp*_2.mat');
-% TimeCourseDataset_B3 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_f*mp*_3.mat');
-% TimeCourseDataset_B4 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_f*mp*_4.mat');
+TimeCourseDataset_B1 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_p*mp*_1.mat'); % VOI_f*whitefilt*_1 mpcorrected
+TimeCourseDataset_B2 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_p*mp*_2.mat');
+TimeCourseDataset_B3 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_p*mp*_3.mat');
+TimeCourseDataset_B4 = dir('/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI/Raw time course/VOI_p*mp*_4.mat');
 
 %GrandaverageEpoch = [];
 for k=1:size(TimeCourseDataset,1)
 
-    TCpathparts = split(TimeCourseDataset(k).name, "_");
-    %TCpathparts = split(TimeCourseDataset_B1(k).name, "_");
+    %TCpathparts = split(TimeCourseDataset(k).name, "_");
+    TCpathparts = split(TimeCourseDataset_B1(k).name, "_");
     % 
     % if length(TCpathparts)>5 && length(TCpathparts)<7
     %     filen = [TCpathparts{1}, '_', TCpathparts{2}, '_', TCpathparts{3}];
@@ -42,28 +42,33 @@ for k=1:size(TimeCourseDataset,1)
     %     SubID = TCpathparts{5};
     % end
 
-    filen = [TCpathparts{1}, '_', TCpathparts{2} ];
-    SubID = TCpathparts{5};
+    % filen = [TCpathparts{1}, '_', TCpathparts{2} ];
+    % SubID = TCpathparts{5};
 
+    %filen = [TCpathparts{1}, '_', TCpathparts{3} ];
+    %SubID = TCpathparts{6};
+
+    filen = [TCpathparts{2}, '_', TCpathparts{4} ];
+    SubID = TCpathparts{7};
    
-    load([TimeCourseDataset(k).folder filesep TimeCourseDataset(k).name]);
-    TimeCourseM = ROI_data_mars;
-    % 
+    % load([TimeCourseDataset(k).folder filesep TimeCourseDataset(k).name]);
+    % TimeCourseM = ROI_data_mars;
+    % % 
     % load([TimeCourseDataset_ns(k).folder filesep TimeCourseDataset_ns(k).name]);
     % TimeCourseM_ns = ROI_data_mars;
     
-    % TimeCourse = [];
-    % load([TimeCourseDataset_B1(k).folder filesep TimeCourseDataset_B1(k).name]);
-    % TimeCourse = [TimeCourse; Y];
-    % load([TimeCourseDataset_B2(k).folder filesep TimeCourseDataset_B2(k).name]);
-    % TimeCourse = [TimeCourse; Y];
-    % load([TimeCourseDataset_B3(k).folder filesep TimeCourseDataset_B3(k).name]);
-    % TimeCourse = [TimeCourse; Y];
-    % load([TimeCourseDataset_B4(k).folder filesep TimeCourseDataset_B4(k).name]);
-    % TimeCourse = [TimeCourse; Y];
-    % TimeCourse = TimeCourse';
+    TimeCourse = [];
+    load([TimeCourseDataset_B1(k).folder filesep TimeCourseDataset_B1(k).name]);
+    TimeCourse = [TimeCourse; Y];
+    load([TimeCourseDataset_B2(k).folder filesep TimeCourseDataset_B2(k).name]);
+    TimeCourse = [TimeCourse; Y];
+    load([TimeCourseDataset_B3(k).folder filesep TimeCourseDataset_B3(k).name]);
+    TimeCourse = [TimeCourse; Y];
+    load([TimeCourseDataset_B4(k).folder filesep TimeCourseDataset_B4(k).name]);
+    TimeCourse = [TimeCourse; Y];
+    TimeCourse = TimeCourse';
 
-    TimeCourse = TimeCourseM;
+    %TimeCourse = TimeCourseM;
 
 
     BlockDataset = dir(['/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/TimingforfMRI/',SubID, '/*/full*.csv']); 
@@ -132,7 +137,7 @@ Wn = [lowcut highcut] / nyquist;
 % Apply the filter using filtfilt for zero-phase filtering
 filteredData = filtfilt(b, a, DataToFilt);
 
-%TimeCourse = filteredData;
+TimeCourse = filteredData;
 TimeCourse = TimeCourse - mean(TimeCourse,"all");
 
     % Select probe onset
@@ -174,7 +179,8 @@ TimeCourse = TimeCourse - mean(TimeCourse,"all");
     % save 
     MeanEpochs = mean(allEpochs,2);
     ROIsavepath ='/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Data/MRI/ROI';
-    savefilename1 = [ROIsavepath filesep 'Preprobe20sARV_',  filen, '_mars2_', SubID '.mat'];
+    %savefilename1 = [ROIsavepath filesep 'Preprobe10sARV_',  filen, '_marsraw_', SubID '.mat'];
+    savefilename1 = [ROIsavepath filesep 'Preprobe20sARV_',  filen, '_spmmpcorrfilt_', SubID '.mat'];
     save(savefilename1,'MeanEpochs')
     fprintf('Done subject: %s \n',SubID);
 
@@ -216,14 +222,14 @@ TimeCourse = TimeCourse - mean(TimeCourse,"all");
 %     saveas(gcf,['/Users/kuszti/Library/CloudStorage/GoogleDrive-aniko.kusztor@monash.edu/Shared drives/MW_fMRI_EEG/Figures/ROIFigures/' filesep SubID '_' TCpathparts{1}, '_', TCpathparts{2}, '_', ChanID, '.png'])
 % 
 
-%     figure
-%     xax = (0:length(TimeCourse)-1) * 1.56;
-%     plot(xax, TimeCourse);
-%     hold on
-%     title(['Full time course' newline SubID ' - ' TCpathparts{1}, ' ', TCpathparts{2}, ' based on  ', ChanID]);
-%     xlabel('Time course (sec)')
-%     ylabel('Average BOLD activity')
-%     axis(gca, 'tight')  
+    % figure
+    % xax = (0:length(TimeCourse)-1) * 1.56;
+    % plot(xax, TimeCourse);
+    % hold on
+    % %title(['Full time course' newline SubID ' - ' TCpathparts{1}, ' ', TCpathparts{2}, ' based on  ', ChanID]);
+    % xlabel('Time course (sec)')
+    % ylabel('Average BOLD activity')
+    % axis(gca, 'tight')  
 % 
 %         % Add vertical lines for trial onsets
 %     for i = 1:height(AllSWBlocks)
